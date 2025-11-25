@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:latest
+    image: postgres:16
     container_name: sae5_6_InTheEnd
     command: postgres
     environment:
