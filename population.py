@@ -130,7 +130,20 @@ def import_csv_to_db(csv_file_path):
                         for row in reader:
                             track_id = row[headers.index('track_id')]
                             track_title = row[headers.index('track_title')]
-                            track_duration = row[headers.index('track_duration')]
+                            track_duration_raw = row[headers.index('track_duration')]
+                            
+                            # format "HH:MM:SS" OU "MM:SS" vers secondes
+                            time_parts = track_duration_raw.split(':')
+                            if len(time_parts) == 3:
+                                hours = int(time_parts[0])
+                                minutes = int(time_parts[1])
+                                seconds = int(time_parts[2])
+                                track_duration = hours * 3600 + minutes * 60 + seconds
+                            elif len(time_parts) == 2:
+                                minutes = int(time_parts[0])
+                                seconds = int(time_parts[1])
+                                track_duration = minutes * 60 + seconds
+
                             track_date_created = process_date(row[headers.index('track_date_created')])
                             track_date_recorded = process_date(row[headers.index('track_date_recorded')])
                             track_composer = row[headers.index('track_composer')]
