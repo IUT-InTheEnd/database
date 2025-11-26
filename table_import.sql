@@ -76,7 +76,8 @@ CREATE TABLE IF NOT EXISTS sae5_6.import_track (
     track_language_code TEXT,
     track_url TEXT,
     track_file TEXT,
-    track_image_file TEXT
+    track_image_file TEXT,
+    license_id TEXT
 );
 
 CREATE TABLE IF NOT EXISTS sae5_6.import_genre (

@@ -5,6 +5,7 @@ import psycopg2.extras
 import re
 import calendar
 import pycountry_convert 
+from datetime import datetime
 
 def process_language_code(code):
     # on passe de en à Anglais etc...
@@ -15,8 +16,18 @@ def process_language_code(code):
     return language_name
 
 def process_date(date_str):
-    # Convertit format : "" en DD-MM-YYYY
-    return
+    # Convertit format : "11/26/2008 02:04:23 AM" en DD-MM-YYYY
+    try:
+        if datetime.strptime(date_str, "%m/%d/%Y %I:%M:%S %p"):
+            date_obj = datetime.strptime(date_str, "%m/%d/%Y %I:%M:%S %p")
+            formatted_date = date_obj.strftime("%d-%m-%Y")
+            return formatted_date
+        elif datetime.strptime(date_str, "%m/%d/%Y"):
+            date_obj = datetime.strptime(date_str, "%m/%d/%Y")
+            formatted_date = date_obj.strftime("%d-%m-%Y")
+            return formatted_date
+    except ValueError:
+        return None
 
 def connection_db():
     return psycopg2.connect(
@@ -35,8 +46,8 @@ def import_csv_to_db(csv_file_path):
             table_name = ['sae5_6.import_artist']
             table_attributes = ['artist_id, artist_name, artist_location, artist_latitude, artist_longitude, artist_favorites, artist_comments, artist_active_year_begin, artist_active_year_end, artist_url, artist_website, artist_wikipedia_page, artist_handle, artist_bio, artist_members, artist_associated_labels, artist_related_projects, artist_contact, artist_donation_url, artist_paypal_name, artist_flattr_name, artist_date_created, artist_image_file']
         case 'raw_tracks':        
-            table_name = ['sae5_6.import_track', 'sae5_6.import_license', 'sae5_6.import_language']
-            table_attributes = ['track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file', 'license_id, license_title, license_url', 'language_code, language_name, language_handle']
+            table_name = ['sae5_6.import_license', 'sae5_6.import_track', 'sae5_6.import_language']
+            table_attributes = ['license_id, license_title, license_url', 'track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id', 'language_code, language_name, language_handle']
         case 'clean_echonest':       
             table_name = ['sae5_6.import_echonest']
             table_attributes = ['track_id, acousticness, energy, instrumentalness, liveness, speechiness, valence, danceability, tempo, artist_discovery, artist_hottness, artist_familiarity, track_hottness, track_currency']
@@ -84,14 +95,27 @@ def import_csv_to_db(csv_file_path):
                             insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
                             cursor.execute(insert_query, (artist_id, artist_name, artist_location, artist_latitude, artist_longitude, artist_favorites, artist_comments, artist_active_year_begin, artist_active_year_end, artist_url, artist_website, artist_wikipedia_page, artist_handle, artist_bio, artist_members, artist_associated_labels, artist_related_projects, artist_contact, artist_donation_url, artist_paypal_name, artist_flattr_name, artist_date_created, artist_image_file))
                 
+                case 'sae5_6.import_license':
+                    license_id_counter = 1
+                    license_id_map = {}
+                    if headers:
+                        for row in reader:
+                            license_title = row[headers.index('license_title')]
+                            license_url = row[headers.index('license_url')]
+                            if license_title not in license_id_map:
+                                license_id_map[license_title] = license_id_counter
+                                insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s)"
+                                cursor.execute(insert_query, (license_id_counter, license_title, license_url))
+                                license_id_counter += 1
+                
                 case 'sae5_6.import_track':
                     if headers:
                         for row in reader:
                             track_id = row[headers.index('track_id')]
                             track_title = row[headers.index('track_title')]
                             track_duration = row[headers.index('track_duration')]
-                            track_date_created = row[headers.index('track_date_created')]
-                            track_date_recorded = row[headers.index('track_date_recorded')]
+                            track_date_created = process_date(row[headers.index('track_date_created')])
+                            track_date_recorded = process_date(row[headers.index('track_date_recorded')])
                             track_composer = row[headers.index('track_composer')]
                             track_lyricist = row[headers.index('track_lyricist')]
                             track_publisher = row[headers.index('track_publisher')]
@@ -108,8 +132,11 @@ def import_csv_to_db(csv_file_path):
                             track_url = row[headers.index('track_url')]
                             track_file = row[headers.index('track_file')]
                             track_image_file = row[headers.index('track_image_file')]
-                            insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                            cursor.execute(insert_query, (track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file))
+                            # Récupère l'id de la map des licenses
+                            license_title = row[headers.index('license_title')]
+                            license_id = license_id_map.get(license_title, None)
+                            insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                            cursor.execute(insert_query, (track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id))
                     
                 case 'sae5_6.import_echonest':
                     if headers:
@@ -148,8 +175,8 @@ def import_csv_to_db(csv_file_path):
                         for row in reader:
                             album_id = row[headers.index('album_id')]
                             album_title = row[headers.index('album_title')]
-                            album_date_release = row[headers.index('album_date_released')]
-                            album_date_created = row[headers.index('album_date_created')]
+                            album_date_release = process_date(row[headers.index('album_date_released')])
+                            album_date_created = process_date(row[headers.index('album_date_created')])
                             album_listens = row[headers.index('album_listens')]
                             album_favorites = row[headers.index('album_favorites')]
                             album_comments = row[headers.index('album_comments')]
@@ -163,18 +190,6 @@ def import_csv_to_db(csv_file_path):
                             insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
                             cursor.execute(insert_query, (album_id, album_title, album_date_release, album_date_created, album_listens, album_favorites, album_comments, album_type, album_url, album_handle, album_information, album_tracks, album_producer, album_engineer))
                 
-                case 'sae5_6.import_license':
-                    license_id_counter = 1
-                    license_id_map = {}
-                    if headers:
-                        for row in reader:
-                            license_title = row[headers.index('license_title')]
-                            license_url = row[headers.index('license_url')]
-                            if license_title not in license_id_map:
-                                license_id_map[license_title] = license_id_counter
-                                insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s)"
-                                cursor.execute(insert_query, (license_id_counter, license_title, license_url))
-                                license_id_counter += 1
                 case 'sae5_6.import_language':
                     country_code_list = []
                     if headers:
