@@ -104,6 +104,11 @@ CREATE TABLE sae5_6.track_echonest (
     valence FLOAT,
     danceability FLOAT,
     tempo FLOAT, 
+    artist_discovery FLOAT,
+    artist_hottness FLOAT,
+    artist_familiarity FLOAT,
+    track_hottness FLOAT,
+    track_currency FLOAT,
     track_id INT NOT NULL,
     FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id)
 );
@@ -220,12 +225,11 @@ CREATE TABLE sae5_6.track_chanter_en (
     PRIMARY KEY (track_id, language_id)
 );
 
-CREATE TABLE sae5_6.agreger (
+CREATE TABLE sae5_6.realiser (
     album_id INT NOT NULL REFERENCES sae5_6.album(album_id),
     track_id INT REFERENCES sae5_6.track(track_id),
-    genre_id INT NOT NULL REFERENCES sae5_6.genre(genre_id),
     artist_id INT NOT NULL REFERENCES sae5_6.artist(artist_id),
-    PRIMARY KEY (album_id, track_id, genre_id, artist_id)
+    PRIMARY KEY (album_id, track_id, artist_id)
 );
 
 CREATE TABLE sae5_6.user_prefere_artiste (
