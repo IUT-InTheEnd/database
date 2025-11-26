@@ -158,18 +158,11 @@ CREATE TABLE sae5_6.playlist (
     FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id)
 );
 
-CREATE TABLE sae5_6.playlist_preferences (
-    playlist_id SERIAL PRIMARY KEY,
-    playlist_name VARCHAR(255) NOT NULL,
-    track_id INT,
-    FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id)
-);
-
 -- Relation Tables
 
 CREATE TABLE sae5_6.quantifie (
     track_id INT NOT NULL REFERENCES sae5_6.track(track_id),
-    echonest_id INT NOT NULL REFERENCES sae5_6.track_echonest(echonest_id),
+    echonest_id INT NOT NULL REFERENCES sae5_6.track_echonest(track_echonest_id),
     PRIMARY KEY (track_id, echonest_id)
 );
 
@@ -238,11 +231,24 @@ CREATE TABLE sae5_6.agreger (
 CREATE TABLE sae5_6.user_prefere_artiste (
     artist_id INT REFERENCES sae5_6.artist(artist_id),
     user_id INT REFERENCES sae5_6.user(user_id),
-    PRIMARY KEY (user_preference_artist_id, user_id)
+    PRIMARY KEY (artist_id, user_id)
 );
 
 CREATE TABLE sae5_6.contient_genres (
     track_id INT REFERENCES sae5_6.track(track_id),
     genre_id INT REFERENCES sae5_6.genre(genre_id),
     PRIMARY KEY (track_id, genre_id)
-)
+);
+
+CREATE TABLE sae5_6.supervise(
+    parent_id INT REFERENCES sae5_6.genre(genre_id),
+    child_id INT REFERENCES sae5_6.genre(genre_id),
+    PRIMARY KEY (parent_id, child_id)
+);
+
+CREATE TABLE sae5_6.ajoute_favori (
+    user_id INT REFERENCES sae5_6.user(user_id),
+    track_id INT REFERENCES sae5_6.track(track_id),
+    PRIMARY KEY (user_id, track_id)
+);
+
