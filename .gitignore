@@ -279,3 +279,6 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/linux,python,pycharm+all
 pgdata/
 dataset/*.csv
+.python-version
+pyproject.toml
+uv.lock
