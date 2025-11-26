@@ -7,6 +7,9 @@ import calendar
 import pycountry_convert 
 from datetime import datetime
 
+# Nombre de lignes à insérer par batch
+BATCH_SIZE = 1000
+
 def process_language_code(code):
     # on passe de en à Anglais etc...
     try:
@@ -47,7 +50,7 @@ def import_csv_to_db(csv_file_path):
             table_attributes = ['artist_id, artist_name, artist_location, artist_latitude, artist_longitude, artist_favorites, artist_comments, artist_active_year_begin, artist_active_year_end, artist_url, artist_website, artist_wikipedia_page, artist_handle, artist_bio, artist_members, artist_associated_labels, artist_related_projects, artist_contact, artist_donation_url, artist_paypal_name, artist_flattr_name, artist_date_created, artist_image_file']
         case 'raw_tracks':        
             table_name = ['sae5_6.import_license', 'sae5_6.import_track', 'sae5_6.import_language']
-            table_attributes = ['license_id, license_title, license_url', 'track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id', 'language_code, language_name, language_handle']
+            table_attributes = ['license_id, license_title, license_url', 'track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id', 'language_id, language_code, language_name, language_handle']
         case 'clean_echonest':       
             table_name = ['sae5_6.import_echonest']
             table_attributes = ['track_id, acousticness, energy, instrumentalness, liveness, speechiness, valence, danceability, tempo, artist_discovery, artist_hottness, artist_familiarity, track_hottness, track_currency']
@@ -68,6 +71,8 @@ def import_csv_to_db(csv_file_path):
             match table_name[i]:
                 case 'sae5_6.import_artist':
                     if headers:
+                        buffer = []
+                        insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
                         for row in reader:
                             artist_id = row[headers.index('artist_id')]
                             artist_name = row[headers.index('artist_name')]
@@ -92,24 +97,36 @@ def import_csv_to_db(csv_file_path):
                             artist_flattr_name = row[headers.index('artist_flattr_name')]
                             artist_date_created = row[headers.index('artist_date_created')]
                             artist_image_file = row[headers.index('artist_image_file')]
-                            insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                            cursor.execute(insert_query, (artist_id, artist_name, artist_location, artist_latitude, artist_longitude, artist_favorites, artist_comments, artist_active_year_begin, artist_active_year_end, artist_url, artist_website, artist_wikipedia_page, artist_handle, artist_bio, artist_members, artist_associated_labels, artist_related_projects, artist_contact, artist_donation_url, artist_paypal_name, artist_flattr_name, artist_date_created, artist_image_file))
+                            buffer.append((artist_id, artist_name, artist_location, artist_latitude, artist_longitude, artist_favorites, artist_comments, artist_active_year_begin, artist_active_year_end, artist_url, artist_website, artist_wikipedia_page, artist_handle, artist_bio, artist_members, artist_associated_labels, artist_related_projects, artist_contact, artist_donation_url, artist_paypal_name, artist_flattr_name, artist_date_created, artist_image_file))
+                            if len(buffer) >= BATCH_SIZE:
+                                psycopg2.extras.execute_values(cursor, insert_query, buffer)
+                                buffer.clear()
+                        if buffer:
+                            psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 
                 case 'sae5_6.import_license':
                     license_id_counter = 1
                     license_id_map = {}
                     if headers:
+                        buffer = []
+                        insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
                         for row in reader:
                             license_title = row[headers.index('license_title')]
                             license_url = row[headers.index('license_url')]
                             if license_title not in license_id_map:
                                 license_id_map[license_title] = license_id_counter
-                                insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s)"
-                                cursor.execute(insert_query, (license_id_counter, license_title, license_url))
+                                buffer.append((license_id_counter, license_title, license_url))
                                 license_id_counter += 1
+                                if len(buffer) >= BATCH_SIZE:
+                                    psycopg2.extras.execute_values(cursor, insert_query, buffer)
+                                    buffer.clear()
+                        if buffer:
+                            psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 
                 case 'sae5_6.import_track':
                     if headers:
+                        buffer = []
+                        insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
                         for row in reader:
                             track_id = row[headers.index('track_id')]
                             track_title = row[headers.index('track_title')]
@@ -135,11 +152,19 @@ def import_csv_to_db(csv_file_path):
                             # Récupère l'id de la map des licenses
                             license_title = row[headers.index('license_title')]
                             license_id = license_id_map.get(license_title, None)
-                            insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                            cursor.execute(insert_query, (track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id))
+                            artist_id = row[headers.index('artist_id')]
+                            album_id = row[headers.index('album_id')]
+                            buffer.append((track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id))
+                            if len(buffer) >= BATCH_SIZE:
+                                psycopg2.extras.execute_values(cursor, insert_query, buffer)
+                                buffer.clear()
+                        if buffer:
+                            psycopg2.extras.execute_values(cursor, insert_query, buffer)
                     
                 case 'sae5_6.import_echonest':
                     if headers:
+                        buffer = []
+                        insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
                         for row in reader:
                             track_id = row[headers.index('track_id')]
                             acousticness = row[headers.index('echonest_audio_features_acousticness')]
@@ -155,11 +180,17 @@ def import_csv_to_db(csv_file_path):
                             artist_familiarity = row[headers.index('echonest_social_features_artist_familiarity')]
                             track_hottness = row[headers.index('echonest_social_features_song_hotttnesss')]
                             track_currency = row[headers.index('echonest_social_features_song_currency')]
-                            insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                            cursor.execute(insert_query, (track_id, acousticness, energy, instrumentalness, liveness, speechiness, valence, danceability, tempo, artist_discovery, artist_hottness, artist_familiarity, track_hottness, track_currency))
+                            buffer.append((track_id, acousticness, energy, instrumentalness, liveness, speechiness, valence, danceability, tempo, artist_discovery, artist_hottness, artist_familiarity, track_hottness, track_currency))
+                            if len(buffer) >= BATCH_SIZE:
+                                psycopg2.extras.execute_values(cursor, insert_query, buffer)
+                                buffer.clear()
+                        if buffer:
+                            psycopg2.extras.execute_values(cursor, insert_query, buffer)
                     
                 case 'sae5_6.import_genre':
                     if headers:
+                        buffer = []
+                        insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
                         for row in reader:
                             genre_id = row[headers.index('genre_id')]
                             genre_parent_id = row[headers.index('genre_parent_id')]
@@ -167,11 +198,17 @@ def import_csv_to_db(csv_file_path):
                             genre_handle = row[headers.index('genre_handle')]
                             genre_color = row[headers.index('genre_color')]
                             top_level = True if row[headers.index('genre_parent_id')] == '' else False
-                            insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s, %s, %s, %s)"
-                            cursor.execute(insert_query, (genre_id, genre_parent_id, genre_title, genre_handle, genre_color, top_level))
+                            buffer.append((genre_id, genre_parent_id, genre_title, genre_handle, genre_color, top_level))
+                            if len(buffer) >= BATCH_SIZE:
+                                psycopg2.extras.execute_values(cursor, insert_query, buffer)
+                                buffer.clear()
+                        if buffer:
+                            psycopg2.extras.execute_values(cursor, insert_query, buffer)
                     
                 case 'sae5_6.import_album':
                     if headers:
+                        buffer = []
+                        insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
                         for row in reader:
                             album_id = row[headers.index('album_id')]
                             album_title = row[headers.index('album_title')]
@@ -187,20 +224,33 @@ def import_csv_to_db(csv_file_path):
                             album_tracks = row[headers.index('album_tracks')]
                             album_producer = row[headers.index('album_producer')]
                             album_engineer = row[headers.index('album_engineer')]
-                            insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                            cursor.execute(insert_query, (album_id, album_title, album_date_release, album_date_created, album_listens, album_favorites, album_comments, album_type, album_url, album_handle, album_information, album_tracks, album_producer, album_engineer))
+                            buffer.append((album_id, album_title, album_date_release, album_date_created, album_listens, album_favorites, album_comments, album_type, album_url, album_handle, album_information, album_tracks, album_producer, album_engineer))
+                            if len(buffer) >= BATCH_SIZE:
+                                psycopg2.extras.execute_values(cursor, insert_query, buffer)
+                                buffer.clear()
+                        if buffer:
+                            psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 
                 case 'sae5_6.import_language':
                     country_code_list = []
+                    language_id_counter = 1
                     if headers:
+                        buffer = []
+                        insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
                         for row in reader:
                             language_code = row[headers.index('track_language_code')]
                             if language_code not in country_code_list:
+                                language_id = language_id_counter
+                                language_id_counter += 1
                                 country_code_list.append(language_code)
                                 language_name = process_language_code(language_code)
                                 language_handle = language_name.lower().replace(" ", "_")
-                                insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES (%s, %s, %s)"
-                                cursor.execute(insert_query, (language_code, language_name, language_handle))
+                                buffer.append((language_id, language_code, language_name, language_handle))
+                                if len(buffer) >= BATCH_SIZE:
+                                    psycopg2.extras.execute_values(cursor, insert_query, buffer)
+                                    buffer.clear()
+                        if buffer:
+                            psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 case _:
                     print("No matching table found.")
                     
@@ -212,6 +262,17 @@ def import_csv_to_db(csv_file_path):
     print(f"Data imported into {table_name} from {csv_file_path}")
 
 if __name__ == "__main__":
+    # Crée la les tables d'import à partir de table_import.sql
+    with open("table_import.sql", "r") as file:
+        sql_commands = file.read()
+    conn = connection_db()
+    cursor = conn.cursor()
+    cursor.execute(sql_commands)
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print("Import tables created successfully.")
+
     csvs = ['raw_artists', 'raw_tracks', 'clean_echonest', 'raw_genres', 'raw_albums']
     for csv_file in csvs:
         import_csv_to_db(csv_file)

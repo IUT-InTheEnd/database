@@ -77,7 +77,9 @@ CREATE TABLE IF NOT EXISTS sae5_6.import_track (
     track_url TEXT,
     track_file TEXT,
     track_image_file TEXT,
-    license_id TEXT
+    license_id TEXT,
+    artist_id TEXT,
+    album_id TEXT
 );
 
 CREATE TABLE IF NOT EXISTS sae5_6.import_genre (
@@ -113,6 +115,7 @@ CREATE TABLE IF NOT EXISTS sae5_6.import_license (
 );
 
 CREATE TABLE IF NOT EXISTS sae5_6.import_language (
+    language_id TEXT,
 	language_code TEXT,
 	language_name TEXT,
 	language_handle TEXT
