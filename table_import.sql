@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS sae5_6.import_genre;
 DROP TABLE IF EXISTS sae5_6.import_echonest;
 DROP TABLE IF EXISTS sae5_6.import_license;
 DROP TABLE IF EXISTS sae5_6.import_language;
+DROP TABLE IF EXISTS sae5_6.import_track_genre;
 
 CREATE TABLE IF NOT EXISTS sae5_6.import_artist (
     artist_id TEXT,
@@ -119,4 +120,9 @@ CREATE TABLE IF NOT EXISTS sae5_6.import_language (
 	language_code TEXT,
 	language_name TEXT,
 	language_handle TEXT
+);
+
+CREATE TABLE IF NOT EXISTS sae5_6.import_track_genre (
+    track_id TEXT,
+    genre_id TEXT
 );

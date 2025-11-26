@@ -49,8 +49,8 @@ def import_csv_to_db(csv_file_path):
             table_name = ['sae5_6.import_artist']
             table_attributes = ['artist_id, artist_name, artist_location, artist_latitude, artist_longitude, artist_favorites, artist_comments, artist_active_year_begin, artist_active_year_end, artist_url, artist_website, artist_wikipedia_page, artist_handle, artist_bio, artist_members, artist_associated_labels, artist_related_projects, artist_contact, artist_donation_url, artist_paypal_name, artist_flattr_name, artist_date_created, artist_image_file']
         case 'raw_tracks':        
-            table_name = ['sae5_6.import_license', 'sae5_6.import_track', 'sae5_6.import_language']
-            table_attributes = ['license_id, license_title, license_url', 'track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id', 'language_id, language_code, language_name, language_handle']
+            table_name = ['sae5_6.import_license', 'sae5_6.import_track', 'sae5_6.import_language', 'sae5_6.import_track_genre']
+            table_attributes = ['license_id, license_title, license_url', 'track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id', 'language_id, language_code, language_name, language_handle', 'track_id, genre_id']
         case 'clean_echonest':       
             table_name = ['sae5_6.import_echonest']
             table_attributes = ['track_id, acousticness, energy, instrumentalness, liveness, speechiness, valence, danceability, tempo, artist_discovery, artist_hottness, artist_familiarity, track_hottness, track_currency']
@@ -251,6 +251,25 @@ def import_csv_to_db(csv_file_path):
                                     buffer.clear()
                         if buffer:
                             psycopg2.extras.execute_values(cursor, insert_query, buffer)
+
+                case 'sae5_6.import_track_genre':
+                    if headers:
+                        buffer = []
+                        insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
+                        for row in reader:
+                            # track_genres contient un json avec une liste de genres
+                            # tel que "[{'genre_id': '21', 'genre_title': 'Hip-Hop', 'genre_url': 'http://freemusicarchive.org/genre/Hip-Hop/'}]"
+                            track_id = row[headers.index('track_id')]
+                            track_genres_str = row[headers.index('track_genres')]
+                            genre_ids = re.findall(r"'genre_id': '(\d+)'", track_genres_str)
+                            for genre_id in genre_ids:
+                                buffer.append((track_id, genre_id))
+                                if len(buffer) >= BATCH_SIZE:
+                                    psycopg2.extras.execute_values(cursor, insert_query, buffer)
+                                    buffer.clear()
+                        if buffer:
+                            psycopg2.extras.execute_values(cursor, insert_query, buffer)
+
                 case _:
                     print("No matching table found.")
                     
