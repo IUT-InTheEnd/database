@@ -122,7 +122,7 @@ CREATE TABLE sae5_6.track_echonest (
 CREATE TABLE sae5_6.artist (
     artist_id SERIAL PRIMARY KEY,
     artist_name VARCHAR(255) NOT NULL,
-    artist_location VARCHAR(255),
+    artist_location VARCHAR(511),
     artist_latitude FLOAT,
     artist_longitude FLOAT,
     artist_favorites INT DEFAULT 0,
