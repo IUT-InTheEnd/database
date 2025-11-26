@@ -42,6 +42,21 @@ CREATE TABLE sae5_6.user_preference_echonest (
     FOREIGN KEY (user_id) REFERENCES sae5_6.user(user_id)
 );
 
+CREATE TABLE sae5_6.genre (
+    genre_id SERIAL PRIMARY KEY,
+    genre_parent_id INT REFERENCES sae5_6.genre(genre_id),
+    genre_title VARCHAR(100) NOT NULL,
+    genre_handle VARCHAR(100),
+    genre_color VARCHAR(10),
+    top_level BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE sae5_6.license (
+    license_id SERIAL PRIMARY KEY,
+    license_title VARCHAR(100) NOT NULL,
+    license_url VARCHAR(255)
+);
+
 CREATE TABLE sae5_6.album (
     album_id SERIAL PRIMARY KEY,
     album_title VARCHAR(255) NOT NULL,
@@ -57,15 +72,6 @@ CREATE TABLE sae5_6.album (
     album_tracks INT DEFAULT 0,
     album_producer VARCHAR(255),
     album_engineer VARCHAR(255)
-);
-
-CREATE TABLE sae5_6.genre (
-    genre_id SERIAL PRIMARY KEY,
-    genre_parent_id INT,
-    genre_title VARCHAR(100) NOT NULL,
-    genre_handle VARCHAR(100),
-    genre_color VARCHAR(10),
-    top_level BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE sae5_6.track (
@@ -90,8 +96,8 @@ CREATE TABLE sae5_6.track (
     track_url VARCHAR(255),
     track_file VARCHAR(255),
     track_image_file VARCHAR(255),
-    genre_id INT NOT NULL,
-    FOREIGN KEY (genre_id) REFERENCES sae5_6.genre(genre_id)
+    genre_id INT REFERENCES sae5_6.genre(genre_id),
+    license_id INT REFERENCES sae5_6.license(license_id)
 );
 
 CREATE TABLE sae5_6.track_echonest (
@@ -111,16 +117,6 @@ CREATE TABLE sae5_6.track_echonest (
     track_currency FLOAT,
     track_id INT NOT NULL,
     FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id)
-);
-
-CREATE TABLE sae5_6.license (
-    license_id SERIAL PRIMARY KEY,
-    license_title VARCHAR(100) NOT NULL,
-    license_url VARCHAR(255),
-    parent_id INT,
-    track_id INT NOT NULL,
-    FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id),
-    FOREIGN KEY (parent_id) REFERENCES sae5_6.license(license_id)
 );
 
 CREATE TABLE sae5_6.artist (
@@ -164,12 +160,6 @@ CREATE TABLE sae5_6.playlist (
 );
 
 -- Relation Tables
-
-CREATE TABLE sae5_6.quantifie (
-    track_id INT NOT NULL REFERENCES sae5_6.track(track_id),
-    echonest_id INT NOT NULL REFERENCES sae5_6.track_echonest(track_echonest_id),
-    PRIMARY KEY (track_id, echonest_id)
-);
 
 CREATE TABLE sae5_6.playlist_contient_track (
     playlist_id INT REFERENCES sae5_6.playlist(playlist_id),
