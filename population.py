@@ -95,7 +95,7 @@ def import_csv_to_db(csv_file_path):
                             artist_donation_url = row[headers.index('artist_donation_url')]
                             artist_paypal_name = row[headers.index('artist_paypal_name')]
                             artist_flattr_name = row[headers.index('artist_flattr_name')]
-                            artist_date_created = row[headers.index('artist_date_created')]
+                            artist_date_created = process_date(row[headers.index('artist_date_created')])
                             artist_image_file = row[headers.index('artist_image_file')]
                             buffer.append((artist_id, artist_name, artist_location, artist_latitude, artist_longitude, artist_favorites, artist_comments, artist_active_year_begin, artist_active_year_end, artist_url, artist_website, artist_wikipedia_page, artist_handle, artist_bio, artist_members, artist_associated_labels, artist_related_projects, artist_contact, artist_donation_url, artist_paypal_name, artist_flattr_name, artist_date_created, artist_image_file))
                             if len(buffer) >= BATCH_SIZE:
@@ -131,7 +131,7 @@ def import_csv_to_db(csv_file_path):
                             track_id = row[headers.index('track_id')]
                             track_title = row[headers.index('track_title')]
                             track_duration_raw = row[headers.index('track_duration')]
-                            
+
                             # format "HH:MM:SS" OU "MM:SS" vers secondes
                             time_parts = track_duration_raw.split(':')
                             if len(time_parts) == 3:
