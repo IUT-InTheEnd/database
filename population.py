@@ -1,10 +1,8 @@
-import os
 import csv
 import psycopg2
 import psycopg2.extras
 import re
-import calendar
-import pycountry_convert 
+from langcodes import *
 from datetime import datetime
 
 # Nombre de lignes à insérer par batch
@@ -13,7 +11,10 @@ BATCH_SIZE = 1000
 def process_language_code(code):
     # on passe de en à Anglais etc...
     try:
-        language_name = pycountry_convert.country_alpha2_to_country_name(code.upper())
+        if code != '' :
+            language_name = Language.get(code).language_name('en').capitalize()
+        else:
+            language_name = 'Unknown'
     except KeyError:
         language_name = 'Unknown'
     return language_name
