@@ -10,6 +10,7 @@ BATCH_SIZE = 1000
 
 # Variable globale pour stocker tous les IDs d'albums
 all_album_ids = []
+id_trackremove = []
 
 def process_language_code(code):
     # on passe de en à Anglais etc...
@@ -128,7 +129,6 @@ def import_csv_to_db(csv_file_path):
                             psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 
                 case 'sae5_6.import_track':
-                    id_trackremove = []
                     if headers:
                         buffer = []
                         insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
@@ -201,10 +201,12 @@ def import_csv_to_db(csv_file_path):
                             artist_familiarity = row[headers.index('echonest_social_features_artist_familiarity')]
                             track_hottness = row[headers.index('echonest_social_features_song_hotttnesss')]
                             track_currency = row[headers.index('echonest_social_features_song_currency')]
-                            buffer.append((track_id, acousticness, energy, instrumentalness, liveness, speechiness, valence, danceability, tempo, artist_discovery, artist_hottness, artist_familiarity, track_hottness, track_currency))
+                            if track_id not in id_trackremove:  
+                                buffer.append((track_id, acousticness, energy, instrumentalness, liveness, speechiness, valence, danceability, tempo, artist_discovery, artist_hottness, artist_familiarity, track_hottness, track_currency))
+                            
                             if len(buffer) >= BATCH_SIZE:
-                                psycopg2.extras.execute_values(cursor, insert_query, buffer)
-                                buffer.clear()
+                                    psycopg2.extras.execute_values(cursor, insert_query, buffer)
+                                    buffer.clear()
                         if buffer:
                             psycopg2.extras.execute_values(cursor, insert_query, buffer)
                     
