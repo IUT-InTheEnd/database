@@ -178,44 +178,12 @@ SELECT
 FROM
 	sae5_6.import_track_genre;
 
--- track sans album mais album_id pk donc not null
--- jvais me tirer une balle c'est quoi ce dataset de con
-
--- _                _ _    _ _   _         _ _    _               
---| |__   __ _ _ __(_) | _(_) |_| |_ ___  (_) | _| | _____  _   _ 
---| '_ \ / _` | '__| | |/ / | __| __/ _ \ | | |/ / |/ / _ \| | | |
---| | | | (_| | |  | |   <| | |_| ||  __/ | |   <|   < (_) | |_| |
---|_| |_|\__,_|_|  |_|_|\_\_|\__|\__\___| |_|_|\_\_|\_\___/ \__,_|
-
---INSERT
---	INTO
---	sae5_6.realiser
---SELECT
---	CASE
---		WHEN album_id = '' THEN NULL
---		ELSE album_id::int
---	END AS album_id,
---	track_id::int,
---	artist_id::int
---FROM
---	sae5_6.import_track;
-
---______________________
---< Wallah jvais me tuer >
--- ----------------------
---          \
---            \             .:---------:.
---              \        .:               :.
---                    .· __..~~       ~~..__ ·.
---               ___________________________________
---                |  :   ---     | |     ---   :  |
---           __   | :   / @ \    | |    / @ \   : |
---          /  \   \:   \___/   /   \   \___/   :/
---  _  _  _ |  |    \          /     \          /
--- / \/ \/ \|  |    : --------         -------- :
--- |  |  | _|_ |    :    o   __________    o    :
--- \_/\_/\|    |     :  。 0 |   ||   |  0  。 :
--- |       \_  |      :-     \___/\___/      -:
--- |   _____   |       .-                   -.
---  \     /   /          .-               -.
---   \______ /              :-----------:
+INSERT
+	INTO
+	sae5_6.realiser
+SELECT
+	album_id::int,
+	track_id::int,
+	artist_id::int
+FROM
+	sae5_6.import_track;
