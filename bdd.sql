@@ -29,7 +29,7 @@ CREATE TABLE sae5_6.user (
 
 -- Recalcule avec trigger moyenne des musiques d'une playlist ou des playlist
 CREATE TABLE sae5_6.user_preference_echonest (
-    user_preference_echonest_id SERIAL PRIMARY KEY,
+    user_id SERIAL PRIMARY KEY,
     acousticness FLOAT,
     energy FLOAT,
     instrumentalness FLOAT,
@@ -38,7 +38,6 @@ CREATE TABLE sae5_6.user_preference_echonest (
     valence FLOAT,
     danceability FLOAT,
     tempo FLOAT,
-    user_id INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES sae5_6.user(user_id)
 );
 
@@ -93,15 +92,14 @@ CREATE TABLE sae5_6.track (
     track_explicit_note TEXT,
     track_instrumental BOOLEAN DEFAULT FALSE,
     track_language_code VARCHAR(10),
-    track_url VARCHAR(255),
+    track_url VARCHAR(1023),
     track_file VARCHAR(255),
     track_image_file VARCHAR(255),
-    genre_id INT REFERENCES sae5_6.genre(genre_id),
     license_id INT REFERENCES sae5_6.license(license_id)
 );
 
 CREATE TABLE sae5_6.track_echonest (
-    track_echonest_id SERIAL PRIMARY KEY,
+    track_id SERIAL PRIMARY KEY,
     acousticness FLOAT,
     energy FLOAT,
     instrumentalness FLOAT,
@@ -115,7 +113,6 @@ CREATE TABLE sae5_6.track_echonest (
     artist_familiarity FLOAT,
     track_hottness FLOAT,
     track_currency FLOAT,
-    track_id INT NOT NULL,
     FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id)
 );
 
