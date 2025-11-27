@@ -198,3 +198,20 @@ SELECT
 FROM
 	sae5_6.import_language;
 
+INSERT
+	INTO
+	sae5_6.track_chanter_en
+SELECT
+	track_id::int,
+	language_id::int
+FROM
+	sae5_6.import_track;
+
+INSERT
+	INTO
+	sae5_6.artiste_chante
+SELECT
+	DISTINCT artist_id::int,
+	language_id::int
+FROM
+	sae5_6.import_track;
