@@ -102,7 +102,11 @@ for _, row in df.iterrows():
         "user_pseudo": generate_pseudo(row["user_id"]),
         "user_password": generate_password(row["user_id"]),
         "user_age": row["age"],
-        "user_job": row["job_status"]
+        "user_job": row["job_status"],
+        "user_gender": row["gender"],
+        "user_plays_music": row["plays_music"],
+        "user_instruments": row["instruments"],
+        "user_music_contexts": row["music_listening_contexts"]
     })
 
 with open("./user_data_clean/user.csv", "w", newline="", encoding="utf-8") as f:
@@ -134,7 +138,8 @@ for _, row in df.iterrows():
         "repeat_listening": row["repeat_listening"],
         "explicit_ok": row["explicit_ok"],
         "avg_song_length": row["avg_song_length"],
-        "avg_daily_listen_time": row["avg_daily_listen_time"]
+        "avg_daily_listen_time": row["avg_daily_listen_time"],
+        "recommended_artists": row["recommended_artists"]
     })
 
 with open("./user_data_clean/user_profile.csv", "w", newline="", encoding="utf-8") as f:
