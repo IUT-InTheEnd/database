@@ -8,6 +8,9 @@ from datetime import datetime
 # Nombre de lignes à insérer par batch
 BATCH_SIZE = 1000
 
+# Variable globale pour stocker tous les IDs d'albums
+all_album_ids = []
+
 def process_language_code(code):
     # on passe de en à Anglais etc...
     try:
@@ -225,7 +228,6 @@ def import_csv_to_db(csv_file_path):
                     
                 case 'sae5_6.import_album':
                     if headers:
-                        all_album_ids = []
                         buffer = []
                         insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
                         for row in reader:
