@@ -8,28 +8,41 @@ CREATE TABLE sae5_6.image (
 );
 
 CREATE TABLE sae5_6.user_profile (
-    profile_id SERIAL PRIMARY KEY,
-    instrument_name VARCHAR(100) NOT NULL,
-    mood_label VARCHAR(100) NOT NULL,
-    envy_label VARCHAR(100) NOT NULL
+    user_profile_id SERIAL PRIMARY KEY,
+    music_envy_today TEXT NOT NULL
+    feeling INT NOT NULL,
+    music_preference INT NOT NULL,
+    music_style_preference INT NOT NULL,
+    music_reason TEXT NOT NULL,
+    listening_context TEXT NOT NULL,
+    current_music_type INT,
+    usual_listening_mode INT NOT NULL,
+    likes_discovery INT NOT NULL,
+    attend_live_concert INT NOT NULL,
+    repeat_listening INT NOT NULL,
+    explicit_ok INT NOT NULL,
+    avg_song_length FLOAT NOT NULL,
+    avg_daily_listen_time FLOAT NOT NULL,
+    recommanded_artists TEXT    
 );
 
 CREATE TABLE sae5_6.user (
     user_id SERIAL PRIMARY KEY,
-    user_age_range VARCHAR(50),
+    user_age FLOAT NOT NULL,
     user_job VARCHAR(100),
-    user_explicit_content BOOLEAN DEFAULT FALSE,
-    user_track_duration_range VARCHAR(50),
-    user_time_listening_day VARCHAR(50),
+    user_plays_music BOOLEAN DEFAULT FALSE,
     user_pseudo VARCHAR(100) NOT NULL,
     user_password TEXT NOT NULL,
+    user_gender VARCHAR(100),
+    user_instruments TEXT,
+    user_music_contexts FLOAT,
     profile_id INT NOT NULL,
     FOREIGN KEY (profile_id) REFERENCES sae5_6.user_profile(profile_id)
 );
 
 -- Recalcule avec trigger moyenne des musiques d'une playlist ou des playlist
 CREATE TABLE sae5_6.user_preference_echonest (
-    user_id SERIAL PRIMARY KEY,
+    user_preference_echonest_id SERIAL PRIMARY KEY,
     acousticness FLOAT,
     energy FLOAT,
     instrumentalness FLOAT,
@@ -38,22 +51,8 @@ CREATE TABLE sae5_6.user_preference_echonest (
     valence FLOAT,
     danceability FLOAT,
     tempo FLOAT,
+    user_id INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES sae5_6.user(user_id)
-);
-
-CREATE TABLE sae5_6.genre (
-    genre_id SERIAL PRIMARY KEY,
-    genre_parent_id INT REFERENCES sae5_6.genre(genre_id),
-    genre_title VARCHAR(100) NOT NULL,
-    genre_handle VARCHAR(100),
-    genre_color VARCHAR(10),
-    top_level BOOLEAN DEFAULT TRUE
-);
-
-CREATE TABLE sae5_6.license (
-    license_id SERIAL PRIMARY KEY,
-    license_title VARCHAR(100) NOT NULL,
-    license_url VARCHAR(255)
 );
 
 CREATE TABLE sae5_6.album (
@@ -71,6 +70,15 @@ CREATE TABLE sae5_6.album (
     album_tracks INT DEFAULT 0,
     album_producer VARCHAR(255),
     album_engineer VARCHAR(255)
+);
+
+CREATE TABLE sae5_6.genre (
+    genre_id SERIAL PRIMARY KEY,
+    genre_parent_id INT,
+    genre_title VARCHAR(100) NOT NULL,
+    genre_handle VARCHAR(100),
+    genre_color VARCHAR(10),
+    top_level BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE sae5_6.track (
@@ -92,14 +100,15 @@ CREATE TABLE sae5_6.track (
     track_explicit_note TEXT,
     track_instrumental BOOLEAN DEFAULT FALSE,
     track_language_code VARCHAR(10),
-    track_url VARCHAR(1023),
+    track_url VARCHAR(255),
     track_file VARCHAR(255),
     track_image_file VARCHAR(255),
-    license_id INT REFERENCES sae5_6.license(license_id)
+    genre_id INT NOT NULL,
+    FOREIGN KEY (genre_id) REFERENCES sae5_6.genre(genre_id)
 );
 
 CREATE TABLE sae5_6.track_echonest (
-    track_id SERIAL PRIMARY KEY,
+    track_echonest_id SERIAL PRIMARY KEY,
     acousticness FLOAT,
     energy FLOAT,
     instrumentalness FLOAT,
@@ -113,13 +122,24 @@ CREATE TABLE sae5_6.track_echonest (
     artist_familiarity FLOAT,
     track_hottness FLOAT,
     track_currency FLOAT,
+    track_id INT NOT NULL,
     FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id)
+);
+
+CREATE TABLE sae5_6.license (
+    license_id SERIAL PRIMARY KEY,
+    license_title VARCHAR(100) NOT NULL,
+    license_url VARCHAR(255),
+    parent_id INT,
+    track_id INT NOT NULL,
+    FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id),
+    FOREIGN KEY (parent_id) REFERENCES sae5_6.license(license_id)
 );
 
 CREATE TABLE sae5_6.artist (
     artist_id SERIAL PRIMARY KEY,
     artist_name VARCHAR(255) NOT NULL,
-    artist_location VARCHAR(511),
+    artist_location VARCHAR(255),
     artist_latitude FLOAT,
     artist_longitude FLOAT,
     artist_favorites INT DEFAULT 0,
@@ -158,6 +178,12 @@ CREATE TABLE sae5_6.playlist (
 
 -- Relation Tables
 
+CREATE TABLE sae5_6.quantifie (
+    track_id INT NOT NULL REFERENCES sae5_6.track(track_id),
+    echonest_id INT NOT NULL REFERENCES sae5_6.track_echonest(track_echonest_id),
+    PRIMARY KEY (track_id, echonest_id)
+);
+
 CREATE TABLE sae5_6.playlist_contient_track (
     playlist_id INT REFERENCES sae5_6.playlist(playlist_id),
     track_id INT REFERENCES sae5_6.track(track_id),
@@ -168,6 +194,12 @@ CREATE TABLE sae5_6.possede_playlist (
     user_id INT REFERENCES sae5_6.user(user_id),
     playlist_id INT REFERENCES sae5_6.playlist(playlist_id),
     PRIMARY KEY (user_id, playlist_id)
+);
+
+CREATE TABLE sae5_6.represente (
+    user_id INT REFERENCES sae5_6.user(user_id),
+    user_preference_echonest_id INT REFERENCES sae5_6.user_preference_echonest(user_preference_echonest_id),
+    PRIMARY KEY (user_id, user_preference_echonest_id)
 );
 
 CREATE TABLE sae5_6.user_parle (
