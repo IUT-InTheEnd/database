@@ -43,7 +43,7 @@ SELECT
 	artist_donation_url ,
 	artist_paypal_name ,
 	artist_flattr_name ,
-	DATE(artist_date_created) AS artist_date_created,
+	TO_DATE(artist_date_created, 'DD-MM-YYYY') AS artist_date_created,
 	artist_image_file
 FROM
 	sae5_6.import_artist ia;
