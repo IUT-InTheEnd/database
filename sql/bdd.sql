@@ -30,12 +30,12 @@ CREATE TABLE sae5_6.user (
     user_id SERIAL PRIMARY KEY,
     user_age FLOAT NOT NULL,
     user_job VARCHAR(100),
-    user_plays_music BOOLEAN DEFAULT FALSE,
+    user_plays_music TEXT,
     user_pseudo VARCHAR(100) NOT NULL,
     user_password TEXT NOT NULL,
     user_gender VARCHAR(100),
     user_instruments TEXT,
-    user_music_contexts FLOAT,
+    user_music_contexts TEXT,
     profile_id INT NOT NULL,
     FOREIGN KEY (profile_id) REFERENCES sae5_6.user_profile(user_profile_id)
 );

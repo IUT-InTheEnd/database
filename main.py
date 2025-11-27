@@ -37,14 +37,12 @@ def main():
     print("Triggers and functions created.")
 
     # Execute le script sql import_tables.sql qui importe les données dans les tables
-    """
     print("Importing tables...")
     with open('sql/import_tables.sql', 'r') as file:
         import_commands = file.read()
     cursor.execute(import_commands)
     conn.commit()
     print("Tables imported.")
-    """
 
     # Lancement du script qui crée les csv nettoyés pour l'import des users
     print("Generating cleaned CSV files for user data...")
@@ -61,7 +59,7 @@ def main():
     with open('user_data_clean/user_profile.csv', 'r') as file:
         reader = csv.reader(file)
         headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO sae5_6.user_profile (user_profile_id, music_envy_today, feeling, music_preference, music_style_preference, music_reason, listening_context, current_music_type, usual_listening_mode, likes_discovery, attend_live_concert, repeat_listening, explicit_ok, avg_song_length, avg_daily_listen_time, recommended_artists) VALUES %s"""
+        insert_query = """INSERT INTO sae5_6.user_profile (user_profile_id, music_envy_today, feeling, music_preference, music_style_preference, music_reason, listening_context, current_music_type, usual_listening_mode, likes_discovery, attend_live_concert, repeat_listening, explicit_ok, avg_song_length, avg_daily_listen_time, recommanded_artists) VALUES %s"""
         buffer = []
         for row in reader:
             user_profile_id = int(row[headers.index('user_profile_id')])
@@ -79,8 +77,8 @@ def main():
             explicit_ok = int(row[headers.index('explicit_ok')])
             avg_song_length = float(row[headers.index('avg_song_length')])
             avg_daily_listen_time = float(row[headers.index('avg_daily_listen_time')])
-            recommended_artists = row[headers.index('recommended_artists')]
-            buffer.append((user_profile_id, music_envy_today, feeling, music_preference, music_style_preference, music_reason, listening_context, current_music_type, usual_listening_mode, likes_discovery, attend_live_concert, repeat_listening, explicit_ok, avg_song_length, avg_daily_listen_time, recommended_artists))
+            recommanded_artists = row[headers.index('recommended_artists')]
+            buffer.append((user_profile_id, music_envy_today, feeling, music_preference, music_style_preference, music_reason, listening_context, current_music_type, usual_listening_mode, likes_discovery, attend_live_concert, repeat_listening, explicit_ok, avg_song_length, avg_daily_listen_time, recommanded_artists))
             if len(buffer) >= BATCH_SIZE:
                 psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 buffer.clear()
@@ -103,12 +101,12 @@ def main():
             user_id = int(row[headers.index('user_id')])
             user_age = float(row[headers.index('user_age')])
             user_job = row[headers.index('user_job')]
-            user_plays_music = bool(int(row[headers.index('user_plays_music')]))
+            user_plays_music = 1 if row[headers.index('user_plays_music')] == '1.0' else 0
             user_pseudo = row[headers.index('user_pseudo')]
             user_password = row[headers.index('user_password')]
             user_gender = row[headers.index('user_gender')]
             user_instruments = row[headers.index('user_instruments')]
-            user_music_contexts = float(row[headers.index('user_music_contexts')])
+            user_music_contexts = row[headers.index('user_music_contexts')]
             profile_id = user_id  # Même id que le profil
             buffer.append((user_id, user_age, user_job, user_plays_music, user_pseudo, user_password, user_gender, user_instruments, user_music_contexts, profile_id))
             if len(buffer) >= BATCH_SIZE:
