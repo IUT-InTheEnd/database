@@ -11,6 +11,7 @@ BATCH_SIZE = 1000
 # Variable globale pour stocker tous les IDs d'albums
 all_album_ids = []
 id_trackremove = []
+all_artist_ids = []
 
 def process_language_code(code):
     # on passe de en à Anglais etc...
@@ -103,6 +104,7 @@ def import_csv_to_db(csv_file_path):
                             artist_date_created = process_date(row[headers.index('artist_date_created')])
                             artist_image_file = row[headers.index('artist_image_file')]
                             buffer.append((artist_id, artist_name, artist_location, artist_latitude, artist_longitude, artist_favorites, artist_comments, artist_active_year_begin, artist_active_year_end, artist_url, artist_website, artist_wikipedia_page, artist_handle, artist_bio, artist_members, artist_associated_labels, artist_related_projects, artist_contact, artist_donation_url, artist_paypal_name, artist_flattr_name, artist_date_created, artist_image_file))
+                            all_artist_ids.append(artist_id)
                             if len(buffer) >= BATCH_SIZE:
                                 psycopg2.extras.execute_values(cursor, insert_query, buffer)
                                 buffer.clear()
@@ -172,7 +174,7 @@ def import_csv_to_db(csv_file_path):
                             license_id = license_id_map.get(license_title, None)
                             artist_id = row[headers.index('artist_id')]
                             album_id = row[headers.index('album_id')]
-                            if album_id != '' and album_id in all_album_ids:
+                            if album_id != '' and album_id in all_album_ids and artist_id in all_artist_ids:
                                 buffer.append((track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id))
                             else:
                                 id_trackremove.append(track_id)
