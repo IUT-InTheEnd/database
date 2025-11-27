@@ -125,6 +125,7 @@ def import_csv_to_db(csv_file_path):
                             psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 
                 case 'sae5_6.import_track':
+                    id_trackremove = []
                     if headers:
                         buffer = []
                         insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
@@ -170,6 +171,8 @@ def import_csv_to_db(csv_file_path):
                             album_id = row[headers.index('album_id')]
                             if album_id != '':
                                 buffer.append((track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id))
+                            else:
+                                id_trackremove.append(track_id)
                             if len(buffer) >= BATCH_SIZE:
                                 psycopg2.extras.execute_values(cursor, insert_query, buffer)
                                 buffer.clear()
@@ -278,10 +281,11 @@ def import_csv_to_db(csv_file_path):
                             track_genres_str = row[headers.index('track_genres')]
                             genre_ids = re.findall(r"'genre_id': '(\d+)'", track_genres_str)
                             for genre_id in genre_ids:
-                                buffer.append((track_id, genre_id))
-                                if len(buffer) >= BATCH_SIZE:
-                                    psycopg2.extras.execute_values(cursor, insert_query, buffer)
-                                    buffer.clear()
+                                if track_id not in id_trackremove:
+                                    buffer.append((track_id, genre_id))
+                                    if len(buffer) >= BATCH_SIZE:
+                                        psycopg2.extras.execute_values(cursor, insert_query, buffer)
+                                        buffer.clear()
                         if buffer:
                             psycopg2.extras.execute_values(cursor, insert_query, buffer)
 
