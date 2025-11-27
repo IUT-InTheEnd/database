@@ -81,6 +81,12 @@ CREATE TABLE sae5_6.genre (
     top_level BOOLEAN DEFAULT TRUE
 );
 
+CREATE TABLE sae5_6.license (
+    license_id SERIAL PRIMARY KEY,
+    license_title VARCHAR(100) NOT NULL,
+    license_url VARCHAR(255)
+);
+
 CREATE TABLE sae5_6.track (
     track_id SERIAL PRIMARY KEY,
     track_title VARCHAR(255) NOT NULL,
@@ -123,12 +129,6 @@ CREATE TABLE sae5_6.track_echonest (
     track_hottness FLOAT,
     track_currency FLOAT,
     FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id)
-);
-
-CREATE TABLE sae5_6.license (
-    license_id SERIAL PRIMARY KEY,
-    license_title VARCHAR(100) NOT NULL,
-    license_url VARCHAR(255)
 );
 
 CREATE TABLE sae5_6.artist (
