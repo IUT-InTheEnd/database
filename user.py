@@ -105,11 +105,11 @@ for _, row in df.iterrows():
         "user_job": row["job_status"]
     })
 
-with open("user.csv", "w", newline="", encoding="utf-8") as f:
+with open("./user_data_clean/user.csv", "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=user_rows[0].keys())
     writer.writeheader()
     writer.writerows(user_rows)
-print("✔ user.csv créé")
+print("user.csv créé")
 
 
 # ---------------------------------------------------------
@@ -137,11 +137,11 @@ for _, row in df.iterrows():
         "avg_daily_listen_time": row["avg_daily_listen_time"]
     })
 
-with open("user_profile.csv", "w", newline="", encoding="utf-8") as f:
+with open("./user_data_clean/user_profile.csv", "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=user_profile_rows[0].keys())
     writer.writeheader()
     writer.writerows(user_profile_rows)
-print("✔ user_profile.csv créé")
+print("user_profile.csv créé")
 
 
 # ---------------------------------------------------------
@@ -172,11 +172,11 @@ for _, row in df.iterrows():
     for gid in genre_ids:
         genre_rows.append({"user_id": user_id, "genre_id": gid})
 
-with open("user_genres_favoris.csv", "w", newline="", encoding="utf-8") as f:
+with open("./user_data_clean/user_genres_favoris.csv", "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=["user_id", "genre_id"])
     writer.writeheader()
     writer.writerows(genre_rows)
-print("✔ user_genres_favoris.csv créé")
+print("user_genres_favoris.csv créé")
 
 
 # ---------------------------------------------------------
@@ -203,8 +203,8 @@ for _, row in df.iterrows():
     for lid in languages_ids:
         language_rows.append({"user_id": user_id, "language_id": lid})
 
-with open("parle.csv", "w", newline="", encoding="utf-8") as f:
+with open("./user_data_clean/parle.csv", "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=["user_id", "language_id"])
     writer.writeheader()
     writer.writerows(language_rows)
-print("✔ parle.csv créé")
+print("parle.csv créé")
