@@ -12,6 +12,7 @@ BATCH_SIZE = 1000
 all_album_ids = []
 id_trackremove = []
 all_artist_ids = []
+country_code_list_all = {}
 
 def process_language_code(code):
     # on passe de en à Anglais etc...
@@ -55,8 +56,8 @@ def import_csv_to_db(csv_file_path):
             table_name = ['sae5_6.import_artist']
             table_attributes = ['artist_id, artist_name, artist_location, artist_latitude, artist_longitude, artist_favorites, artist_comments, artist_active_year_begin, artist_active_year_end, artist_url, artist_website, artist_wikipedia_page, artist_handle, artist_bio, artist_members, artist_associated_labels, artist_related_projects, artist_contact, artist_donation_url, artist_paypal_name, artist_flattr_name, artist_date_created, artist_image_file']
         case 'raw_tracks':        
-            table_name = ['sae5_6.import_license', 'sae5_6.import_track', 'sae5_6.import_language', 'sae5_6.import_track_genre']
-            table_attributes = ['license_id, license_title, license_url', 'track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id', 'language_id, language_code, language_name, language_handle', 'track_id, genre_id']
+            table_name = ['sae5_6.import_license', 'sae5_6.import_language', 'sae5_6.import_track',  'sae5_6.import_track_genre']
+            table_attributes = ['license_id, license_title, license_url', 'language_id, language_code, language_name, language_handle', 'track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id, language_id', 'track_id, genre_id']
         case 'clean_echonest':       
             table_name = ['sae5_6.import_echonest']
             table_attributes = ['track_id, acousticness, energy, instrumentalness, liveness, speechiness, valence, danceability, tempo, artist_discovery, artist_hottness, artist_familiarity, track_hottness, track_currency']
@@ -174,8 +175,9 @@ def import_csv_to_db(csv_file_path):
                             license_id = license_id_map.get(license_title, None)
                             artist_id = row[headers.index('artist_id')]
                             album_id = row[headers.index('album_id')]
+                            language_id = country_code_list_all.get(track_language_code, None)
                             if album_id != '' and album_id in all_album_ids and artist_id in all_artist_ids:
-                                buffer.append((track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id))
+                                buffer.append((track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id, language_id))
                             else:
                                 id_trackremove.append(track_id)
                             if len(buffer) >= BATCH_SIZE:
@@ -272,6 +274,7 @@ def import_csv_to_db(csv_file_path):
                                 language_name = process_language_code(language_code)
                                 language_handle = language_name.lower().replace(" ", "_")
                                 buffer.append((language_id, language_code, language_name, language_handle))
+                                country_code_list_all[language_code] = language_id
                                 if len(buffer) >= BATCH_SIZE:
                                     psycopg2.extras.execute_values(cursor, insert_query, buffer)
                                     buffer.clear()

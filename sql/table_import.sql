@@ -80,7 +80,8 @@ CREATE TABLE IF NOT EXISTS sae5_6.import_track (
     track_image_file TEXT,
     license_id TEXT,
     artist_id TEXT,
-    album_id TEXT
+    album_id TEXT,
+    language_id TEXT
 );
 
 CREATE TABLE IF NOT EXISTS sae5_6.import_genre (
