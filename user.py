@@ -7,6 +7,11 @@ import math
 
 df = pd.read_csv("dataset/clean_answers.csv")
 
+# --- FIX ---
+# user_id au début du header car absent dans le CSV d'origine
+if "user_id" not in df.columns:
+    df.insert(0, "user_id", range(1, len(df) + 1))
+
 def generate_pseudo(user_id):
     return f"user_{user_id}"
 
@@ -106,7 +111,7 @@ for _, row in df.iterrows():
         "user_gender": row["gender"],
         "user_plays_music": row["plays_music"],
         "user_instruments": row["instruments"],
-        "user_music_contexts": row["music_listening_contexts"]
+        "user_music_contexts": row["listening_contexts"]
     })
 
 with open("./user_data_clean/user.csv", "w", newline="", encoding="utf-8") as f:

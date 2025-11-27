@@ -168,7 +168,8 @@ def import_csv_to_db(csv_file_path):
                             license_id = license_id_map.get(license_title, None)
                             artist_id = row[headers.index('artist_id')]
                             album_id = row[headers.index('album_id')]
-                            buffer.append((track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id))
+                            if album_id != '':
+                                buffer.append((track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id))
                             if len(buffer) >= BATCH_SIZE:
                                 psycopg2.extras.execute_values(cursor, insert_query, buffer)
                                 buffer.clear()
@@ -294,9 +295,9 @@ def import_csv_to_db(csv_file_path):
     conn.close()
     print(f"Data imported into {table_name} from {csv_file_path}")
 
-if __name__ == "__main__":
+def main():
     # Crée la les tables d'import à partir de table_import.sql
-    with open("table_import.sql", "r") as file:
+    with open("sql/table_import.sql", "r") as file:
         sql_commands = file.read()
     conn = connection_db()
     cursor = conn.cursor()
@@ -309,3 +310,6 @@ if __name__ == "__main__":
     csvs = ['raw_artists', 'raw_tracks', 'clean_echonest', 'raw_genres', 'raw_albums']
     for csv_file in csvs:
         import_csv_to_db(csv_file)
+
+if __name__ == "__main__":
+    main()

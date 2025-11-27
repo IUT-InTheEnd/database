@@ -9,7 +9,7 @@ CREATE TABLE sae5_6.image (
 
 CREATE TABLE sae5_6.user_profile (
     user_profile_id SERIAL PRIMARY KEY,
-    music_envy_today TEXT NOT NULL
+    music_envy_today TEXT NOT NULL,
     feeling INT NOT NULL,
     music_preference INT NOT NULL,
     music_style_preference INT NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE sae5_6.user (
     user_instruments TEXT,
     user_music_contexts FLOAT,
     profile_id INT NOT NULL,
-    FOREIGN KEY (profile_id) REFERENCES sae5_6.user_profile(profile_id)
+    FOREIGN KEY (profile_id) REFERENCES sae5_6.user_profile(user_profile_id)
 );
 
 -- Recalcule avec trigger moyenne des musiques d'une playlist ou des playlist
@@ -269,3 +269,8 @@ CREATE TABLE sae5_6.ajoute_favori (
     PRIMARY KEY (user_id, track_id)
 );
 
+CREATE TABLE sae5_6.ajoute_genre_favoris (
+    user_id INT REFERENCES sae5_6.user(user_id),
+    genre_id INT REFERENCES sae5_6.genre(genre_id),
+    PRIMARY KEY (user_id, genre_id)
+);

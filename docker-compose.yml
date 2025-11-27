@@ -9,8 +9,5 @@ services:
       POSTGRES_DB: InTheEnd_DB
     volumes:
       - ./pgdata:/var/lib/postgresql/data
-      # Auto création de la BDD, des tables et des triggers à partir du script SQL
-      - ./bdd.sql:/docker-entrypoint-initdb.d/bdd.sql
-      - ./trigger_bdd.sql:/docker-entrypoint-initdb.d/trigger_bdd.sql
     ports:
       - "25000:5432"

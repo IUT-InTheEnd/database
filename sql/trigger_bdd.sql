@@ -1,0 +1,1 @@
+SELECT * FROM sae5_6.user_profile;
