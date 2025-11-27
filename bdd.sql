@@ -170,12 +170,6 @@ CREATE TABLE sae5_6.possede_playlist (
     PRIMARY KEY (user_id, playlist_id)
 );
 
-CREATE TABLE sae5_6.represente (
-    user_id INT REFERENCES sae5_6.user(user_id),
-    user_preference_echonest_id INT REFERENCES sae5_6.user_preference_echonest(user_preference_echonest_id),
-    PRIMARY KEY (user_id, user_preference_echonest_id)
-);
-
 CREATE TABLE sae5_6.user_parle (
     user_id INT REFERENCES sae5_6.user(user_id),
     language_id INT REFERENCES sae5_6.language(language_id),
