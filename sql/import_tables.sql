@@ -187,3 +187,14 @@ SELECT
 	artist_id::int
 FROM
 	sae5_6.import_track;
+
+INSERT
+	INTO
+	sae5_6.language
+SELECT
+	language_id::int,
+	language_name,
+	language_handle
+FROM
+	sae5_6.import_language;
+
