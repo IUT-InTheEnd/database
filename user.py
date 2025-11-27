@@ -155,11 +155,19 @@ for _, row in df.iterrows():
     genres = row["current_genres"]
 
     try:
-        languages = json.loads(genres)
+        genres_list = json.loads(genres)        # ex: '["Rock", "Pop"]'
     except:
-        languages = ast.literal_eval(genres)
+        try:
+            genres_list = ast.literal_eval(genres)  # ex: "['Rock', 'Pop']"
+        except:
+            genres_list = [g.strip() for g in genres.split(",")]  # ex: "Rock, Pop"
 
-    genre_ids = transform_genres(genres)
+    # S'assurer que c'est une liste
+    if not isinstance(genres_list, list):
+        genres_list = [genres_list]
+
+    # Convertir en IDs
+    genre_ids = transform_genres(genres_list)
 
     for gid in genre_ids:
         genre_rows.append({"user_id": user_id, "genre_id": gid})
