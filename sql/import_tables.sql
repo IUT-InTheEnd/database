@@ -152,6 +152,7 @@ INSERT
 	INTO
 	sae5_6.track_echonest
 SELECT
+	track_id::int,
 	acousticness::float,
 	energy::float,
 	instrumentalness::float,
@@ -164,8 +165,7 @@ SELECT
 	artist_hottness::float,
 	artist_familiarity::float,
 	track_hottness::float,
-	track_currency::float,
-	track_id::int
+	track_currency::float
 FROM
 	sae5_6.import_echonest;
 

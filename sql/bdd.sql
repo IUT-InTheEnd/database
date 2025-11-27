@@ -100,15 +100,15 @@ CREATE TABLE sae5_6.track (
     track_explicit_note TEXT,
     track_instrumental BOOLEAN DEFAULT FALSE,
     track_language_code VARCHAR(10),
-    track_url VARCHAR(255),
+    track_url VARCHAR(1023),
     track_file VARCHAR(255),
     track_image_file VARCHAR(255),
-    genre_id INT NOT NULL,
-    FOREIGN KEY (genre_id) REFERENCES sae5_6.genre(genre_id)
+    license_id INT,
+    FOREIGN KEY (license_id) REFERENCES sae5_6.license(license_id)
 );
 
 CREATE TABLE sae5_6.track_echonest (
-    track_echonest_id SERIAL PRIMARY KEY,
+    track_id SERIAL PRIMARY KEY,
     acousticness FLOAT,
     energy FLOAT,
     instrumentalness FLOAT,
@@ -122,18 +122,13 @@ CREATE TABLE sae5_6.track_echonest (
     artist_familiarity FLOAT,
     track_hottness FLOAT,
     track_currency FLOAT,
-    track_id INT NOT NULL,
     FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id)
 );
 
 CREATE TABLE sae5_6.license (
     license_id SERIAL PRIMARY KEY,
     license_title VARCHAR(100) NOT NULL,
-    license_url VARCHAR(255),
-    parent_id INT,
-    track_id INT NOT NULL,
-    FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id),
-    FOREIGN KEY (parent_id) REFERENCES sae5_6.license(license_id)
+    license_url VARCHAR(255)
 );
 
 CREATE TABLE sae5_6.artist (
@@ -177,12 +172,6 @@ CREATE TABLE sae5_6.playlist (
 );
 
 -- Relation Tables
-
-CREATE TABLE sae5_6.quantifie (
-    track_id INT NOT NULL REFERENCES sae5_6.track(track_id),
-    echonest_id INT NOT NULL REFERENCES sae5_6.track_echonest(track_echonest_id),
-    PRIMARY KEY (track_id, echonest_id)
-);
 
 CREATE TABLE sae5_6.playlist_contient_track (
     playlist_id INT REFERENCES sae5_6.playlist(playlist_id),
