@@ -45,6 +45,12 @@ def main():
     conn.commit()
     print("Tables imported.")
     """
+
+    # Lancement du script qui crée les csv nettoyés pour l'import des users
+    print("Generating cleaned CSV files for user data...")
+    import user
+    user.main()
+    print("Cleaned CSV files generated.")
     
     # Import des données utilisateurs depuis les fichiers csv
     print("Importing user data from CSV files...")

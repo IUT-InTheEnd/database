@@ -126,6 +126,7 @@ def import_csv_to_db(csv_file_path):
                 
                 case 'sae5_6.import_track':
                     id_trackremove = []
+                    all_album_ids = []
                     if headers:
                         buffer = []
                         insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
@@ -169,7 +170,7 @@ def import_csv_to_db(csv_file_path):
                             license_id = license_id_map.get(license_title, None)
                             artist_id = row[headers.index('artist_id')]
                             album_id = row[headers.index('album_id')]
-                            if album_id != '':
+                            if album_id != '' and album_id in all_album_ids:
                                 buffer.append((track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id))
                             else:
                                 id_trackremove.append(track_id)
@@ -225,6 +226,7 @@ def import_csv_to_db(csv_file_path):
                     
                 case 'sae5_6.import_album':
                     if headers:
+                        all_album_ids = []
                         buffer = []
                         insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
                         for row in reader:
@@ -243,6 +245,7 @@ def import_csv_to_db(csv_file_path):
                             album_producer = row[headers.index('album_producer')]
                             album_engineer = row[headers.index('album_engineer')]
                             buffer.append((album_id, album_title, album_date_release, album_date_created, album_listens, album_favorites, album_comments, album_type, album_url, album_handle, album_information, album_tracks, album_producer, album_engineer))
+                            all_album_ids.append(album_id)
                             if len(buffer) >= BATCH_SIZE:
                                 psycopg2.extras.execute_values(cursor, insert_query, buffer)
                                 buffer.clear()
@@ -311,7 +314,7 @@ def main():
     conn.close()
     print("Import tables created successfully.")
 
-    csvs = ['raw_artists', 'raw_tracks', 'clean_echonest', 'raw_genres', 'raw_albums']
+    csvs = ['raw_albums', 'raw_artists', 'raw_tracks', 'clean_echonest', 'raw_genres']
     for csv_file in csvs:
         import_csv_to_db(csv_file)
 
