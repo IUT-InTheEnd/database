@@ -160,10 +160,28 @@ def main():
             buffer.clear()
     conn.commit()
     print("User language preference data imported.")
-    cursor.close()
-    conn.close()
 
     print("All data imported successfully.")
+
+    print("Delete import tables...")
+    
+    query = """
+        DROP TABLE IF EXISTS sae5_6.import_artist;
+        DROP TABLE IF EXISTS sae5_6.import_album;
+        DROP TABLE IF EXISTS sae5_6.import_track;
+        DROP TABLE IF EXISTS sae5_6.import_genre;
+        DROP TABLE IF EXISTS sae5_6.import_echonest;
+        DROP TABLE IF EXISTS sae5_6.import_license;
+        DROP TABLE IF EXISTS sae5_6.import_language;
+        DROP TABLE IF EXISTS sae5_6.import_track_genre;
+    """
+    cursor.execute(query)
+    conn.commit()
+    print("Import tables deleted.")
+
+    cursor.close()
+    conn.close()
+    print("End.")
 
 
 if __name__ == "__main__":

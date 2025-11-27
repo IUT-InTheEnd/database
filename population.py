@@ -126,7 +126,6 @@ def import_csv_to_db(csv_file_path):
                 
                 case 'sae5_6.import_track':
                     id_trackremove = []
-                    all_album_ids = []
                     if headers:
                         buffer = []
                         insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
