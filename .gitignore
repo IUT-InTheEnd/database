@@ -283,4 +283,5 @@ dataset/*.csv
 pyproject.toml
 uv.lock
 population_server.py
+main_server.py
 user_data_clean/*.csv

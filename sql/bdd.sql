@@ -1,12 +1,6 @@
 DROP SCHEMA IF EXISTS sae5_6 CASCADE;
 CREATE SCHEMA sae5_6;
 
-CREATE TABLE sae5_6.image (
-    image_id SERIAL PRIMARY KEY,
-    image_url VARCHAR(255) NOT NULL,
-    image_name VARCHAR(100)
-);
-
 CREATE TABLE sae5_6.user_profile (
     user_profile_id SERIAL PRIMARY KEY,
     music_envy_today TEXT NOT NULL,
@@ -197,28 +191,10 @@ CREATE TABLE sae5_6.user_parle (
     PRIMARY KEY (user_id, language_id)
 );
 
-CREATE TABLE sae5_6.provient_artist (
-    artist_id INT NOT NULL REFERENCES sae5_6.artist(artist_id),
-    image_id INT NOT NULL REFERENCES sae5_6.image(image_id),
-    PRIMARY KEY (artist_id, image_id)
-);
-
 CREATE TABLE sae5_6.artiste_chante (
     artist_id INT REFERENCES sae5_6.artist(artist_id),
     language_id INT REFERENCES sae5_6.language(language_id),
     PRIMARY KEY (artist_id, language_id)
-);
-
-CREATE TABLE sae5_6.provient_album (
-    album_id INT NOT NULL REFERENCES sae5_6.album(album_id),
-    image_id INT NOT NULL REFERENCES sae5_6.image(image_id),
-    PRIMARY KEY (album_id, image_id)
-);
-
-CREATE TABLE sae5_6.provient_license (
-    license_id INT NOT NULL REFERENCES sae5_6.license(license_id),
-    image_id INT NOT NULL REFERENCES sae5_6.image(image_id),
-    PRIMARY KEY (license_id, image_id)
 );
 
 CREATE TABLE sae5_6.track_chanter_en (
