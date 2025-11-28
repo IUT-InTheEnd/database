@@ -22,10 +22,10 @@ def main():
     conn.commit()
     print("Database created.")
 
-    # Execute le script population.py
+    # Execute le script peuplement.py
     print("Populating temp database...")
-    import population
-    population.main()
+    import peuplement
+    peuplement.main()
     print("Temp Database populated.")
 
     # Crée les triggers et fonctions à pour le sgbd

@@ -282,6 +282,6 @@ dataset/*.csv
 .python-version
 pyproject.toml
 uv.lock
-population_server.py
+peuplement_server.py
 main_server.py
 user_data_clean/*.csv

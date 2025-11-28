@@ -2,7 +2,7 @@
 CREATE OR REPLACE FUNCTION sae5_6.calc_echonest_favoris()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Update if user_id has already data in the sae5_6.user_preference_echonest table
+    -- Update si le user existe déjà
     IF EXISTS (SELECT 1 FROM sae5_6.user_preference_echonest WHERE user_id = NEW.user_id) THEN
         UPDATE sae5_6.user_preference_echonest
         SET acousticness = (SELECT AVG(te.acousticness)

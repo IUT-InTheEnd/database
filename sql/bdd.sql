@@ -36,7 +36,7 @@ CREATE TABLE sae5_6.user (
 
 -- Recalcule avec trigger moyenne des musiques d'une playlist ou des playlist
 CREATE TABLE sae5_6.user_preference_echonest (
-    user_preference_echonest_id SERIAL PRIMARY KEY,
+    user_id INT PRIMARY KEY,
     acousticness FLOAT,
     energy FLOAT,
     instrumentalness FLOAT,
@@ -45,7 +45,6 @@ CREATE TABLE sae5_6.user_preference_echonest (
     valence FLOAT,
     danceability FLOAT,
     tempo FLOAT,
-    user_id INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES sae5_6.user(user_id)
 );
 
@@ -181,8 +180,8 @@ CREATE TABLE sae5_6.possede_playlist (
 
 CREATE TABLE sae5_6.represente (
     user_id INT REFERENCES sae5_6.user(user_id),
-    user_preference_echonest_id INT REFERENCES sae5_6.user_preference_echonest(user_preference_echonest_id),
-    PRIMARY KEY (user_id, user_preference_echonest_id)
+    user_id_echonest INT REFERENCES sae5_6.user_preference_echonest(user_id),
+    PRIMARY KEY (user_id, user_id_echonest)
 );
 
 CREATE TABLE sae5_6.user_parle (
@@ -238,4 +237,17 @@ CREATE TABLE sae5_6.ajoute_genre_favoris (
     user_id INT REFERENCES sae5_6.user(user_id),
     genre_id INT REFERENCES sae5_6.genre(genre_id),
     PRIMARY KEY (user_id, genre_id)
+);
+
+CREATE TABLE sae5_6.user_ajoute_album_favoris (
+    user_id INT REFERENCES sae5_6.user(user_id),
+    album_id INT REFERENCES sae5_6.album(album_id),
+    PRIMARY KEY (user_id, album_id)
+);
+
+CREATE TABLE sae5_6.user_ecoute (
+    user_id INT REFERENCES sae5_6.user(user_id),
+    track_id INT REFERENCES sae5_6.track(track_id),
+    nb_ecoute INT DEFAULT 0,
+    PRIMARY KEY (user_id, track_id)
 );
