@@ -28,9 +28,9 @@ def main():
     def generate_password(user_id):
         return f"pass_{user_id}"
 
-    # --- MAPPINGS ---
+    # --- MAPPINGS utils pour le système de recommandation ---
 
-    def transform_fealing(feeling):
+    def transform_fealing(feeling): 
         return {
             "Calme": 0,
             "Équilibré(e)": 1,
@@ -64,6 +64,8 @@ def main():
             "Avec les gens que vous côtoyez (amis, famille, collègues de travail...)": 2
         }.get(mode)
 
+    # transformer les genres en IDs
+
     def transform_genres(genres):
         genre_map = {
             "Pop": 10,
@@ -84,6 +86,8 @@ def main():
             "Parlé (slam, poésie, podcast...)": 20
         }
         return [genre_map[g] for g in genres if g in genre_map]
+
+    # trasnformer les langues en IDs
 
     def transform_languages(languages):
         langues_map = {
@@ -106,12 +110,12 @@ def main():
 
 
     # ---------------------------------------------------------
-    # 1) TABLE USER
+    # TABLE USER
     # ---------------------------------------------------------
 
-    user_rows = []
+    user_rows = [] # liste pour la création du CSV
 
-    for _, row in df.iterrows():
+    for _, row in df.iterrows(): #_ pour ignorer l'index obligatoire pour le iterrows
         user_rows.append({
             "user_id": row["user_id"],
             "user_pseudo": generate_pseudo(row["user_id"]),
@@ -124,15 +128,16 @@ def main():
             "user_music_contexts": row["listening_contexts"]
         })
 
+    # création du CSV
     with open("./user_data_clean/user.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=user_rows[0].keys())
         writer.writeheader()
-        writer.writerows(user_rows)
-    print("user.csv créé")
+        writer.writerows(user_rows) # ecriture des lignes de user_rows
+    print("succès de la création de user.csv")
 
 
     # ---------------------------------------------------------
-    # 2) TABLE USER PROFILE
+    # TABLE USER PROFILE
     # ---------------------------------------------------------
 
     user_profile_rows = []
@@ -161,11 +166,11 @@ def main():
         writer = csv.DictWriter(f, fieldnames=user_profile_rows[0].keys())
         writer.writeheader()
         writer.writerows(user_profile_rows)
-    print("user_profile.csv créé")
+    print("succès de la création de user_profile.csv")
 
 
     # ---------------------------------------------------------
-    # 3) TABLE AJOUTE GENRE FAVORIS
+    # TABLE AJOUTE GENRE FAVORIS
     # ---------------------------------------------------------
 
     genre_rows = []
@@ -174,19 +179,20 @@ def main():
         user_id = row["user_id"]
         genres = row["current_genres"]
 
+        # problème de formatage des différentes lignes de current_genres
         try:
-            genres_list = json.loads(genres)        # ex: '["Rock", "Pop"]'
+            genres_list = json.loads(genres)        # loads en json : '["Rock", "Pop"]' 
         except:
             try:
                 genres_list = ast.literal_eval(genres)  # ex: "['Rock', 'Pop']"
             except:
                 genres_list = [g.strip() for g in genres.split(",")]  # ex: "Rock, Pop"
 
-        # S'assurer que c'est une liste
+        # espérer que c'est une liste
         if not isinstance(genres_list, list):
             genres_list = [genres_list]
 
-        # Convertir en IDs
+        # transformation en ID
         genre_ids = transform_genres(genres_list)
 
         for gid in genre_ids:
@@ -196,23 +202,22 @@ def main():
         writer = csv.DictWriter(f, fieldnames=["user_id", "genre_id"])
         writer.writeheader()
         writer.writerows(genre_rows)
-    print("user_genres_favoris.csv créé")
+    print("succès de la création de user_genres_favoris.csv")
 
 
     # ---------------------------------------------------------
-    # 4) TABLE PARLE (langues)
+    # TABLE PARLE
     # ---------------------------------------------------------
 
     language_rows = []
 
     for _, row in df.iterrows():
         user_id = row["user_id"]
-
-        # lire la liste de langues proprement
         raw = row["song_languages"]
+
+        # pareil que pour les genres
         if raw is None or (isinstance(raw, float) and math.isnan(raw)):
             continue
-
         try:
             languages = json.loads(raw)
         except:
@@ -227,7 +232,8 @@ def main():
         writer = csv.DictWriter(f, fieldnames=["user_id", "language_id"])
         writer.writeheader()
         writer.writerows(language_rows)
-    print("parle.csv créé")
+    print("succès de la création de parle.csv")
+
 
 if __name__ == "__main__":
     main()
