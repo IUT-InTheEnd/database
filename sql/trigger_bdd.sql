@@ -87,35 +87,33 @@ FOR EACH ROW
 EXECUTE FUNCTION sae5_6.calc_echonest_favoris();
 
 
-CREATE OR REPLACE FUNCTION incr_listens
-RETURN TRIGGER as $$
+CREATE OR REPLACE FUNCTION sae5_6.incr_listens()
+RETURNS TRIGGER AS $$
 DECLARE
     v_album_id INT;
     v_artist_ID INT;
-
 BEGIN
-
-    SELECT album_id, artist_id
+    SELECT sae5_6.album_id, sae5_6.artist_id
     INTO v_album_id, v_artist_ID
-    FROM track
+    FROM sae5_6.track
     WHERE track_id = NEW.track_id;
 
-    UPDATE track
+    UPDATE sae5_6.track
     set track_listens = track_listens + 1
     WHERE track_id = NEW.track_id;
 
 
-    UPDATE album
+    UPDATE sae5_6.album
     set album_listens = track_listens + 1
     WHERE album_id = v_album_id;
 
-    UPDATE artist
+    UPDATE sae5_6.artist
     set artist_listens = artist_listens + 1
     WHERE artist_id = v_album_id;
 END;
-$$ LANGUAGE plpgsql
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_calc_listens
-AFTER INSERT on sae5_6.ecoute
+AFTER INSERT on sae5_6.user_ecoute
 FOR EACH ROW
-EXECUTE FUNCTION sae5_6.calc_listens();
+EXECUTE FUNCTION sae5_6.incr_listens();
