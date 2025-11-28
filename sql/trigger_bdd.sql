@@ -6,37 +6,37 @@ BEGIN
     IF EXISTS (SELECT 1 FROM sae5_6.user_preference_echonest WHERE user_id = NEW.user_id) THEN
         UPDATE sae5_6.user_preference_echonest
         SET acousticness = (SELECT AVG(te.acousticness)
-                            FROM sae5_6.ajoute_favori af
-                            JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
-                            WHERE af.user_id = NEW.user_id),
+                FROM sae5_6.ajoute_favori af
+                JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
+                WHERE af.user_id = NEW.user_id),
             energy = (SELECT AVG(te.energy)
-                      FROM sae5_6.ajoute_favori af
-                      JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
-                      WHERE af.user_id = NEW.user_id),
+                FROM sae5_6.ajoute_favori af
+                JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
+                WHERE af.user_id = NEW.user_id),
             instrumentalness = (SELECT AVG(te.instrumentalness)
-                                FROM sae5_6.ajoute_favori af
-                                JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
-                                WHERE af.user_id = NEW.user_id),
+                FROM sae5_6.ajoute_favori af
+                JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
+                WHERE af.user_id = NEW.user_id),
             liveness = (SELECT AVG(te.liveness)
-                        FROM sae5_6.ajoute_favori af
-                        JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
-                        WHERE af.user_id = NEW.user_id),
+                FROM sae5_6.ajoute_favori af
+                JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
+                WHERE af.user_id = NEW.user_id),
             speechiness = (SELECT AVG(te.speechiness)
-                           FROM sae5_6.ajoute_favori af
-                           JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
-                           WHERE af.user_id = NEW.user_id),
+                FROM sae5_6.ajoute_favori af
+                JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
+                WHERE af.user_id = NEW.user_id),
             valence = (SELECT AVG(te.valence)
-                       FROM sae5_6.ajoute_favori af
-                       JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
-                       WHERE af.user_id = NEW.user_id),
+                FROM sae5_6.ajoute_favori af
+                JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
+                WHERE af.user_id = NEW.user_id),
             danceability = (SELECT AVG(te.danceability)
-                            FROM sae5_6.ajoute_favori af
-                            JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
-                            WHERE af.user_id = NEW.user_id),
+                FROM sae5_6.ajoute_favori af
+                JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
+                WHERE af.user_id = NEW.user_id),
             tempo = (SELECT AVG(te.tempo)
-                     FROM sae5_6.ajoute_favori af
-                     JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
-                     WHERE af.user_id = NEW.user_id)
+                FROM sae5_6.ajoute_favori af
+                JOIN sae5_6.track_echonest te ON af.track_id = te.track_id
+                WHERE af.user_id = NEW.user_id)
         WHERE user_id = NEW.user_id;
     ELSE
         -- Insert new data
