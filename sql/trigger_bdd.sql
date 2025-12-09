@@ -1,3 +1,9 @@
+DROP TRIGGER IF EXISTS trg_calc_echonest_favoris ON sae5_6.ajoute_favori;
+DROP FUNCTION IF EXISTS sae5_6.calc_echonest_favoris();
+DROP TRIGGER IF EXISTS trg_calc_listens ON sae5_6.user_ecoute;
+DROP FUNCTION IF EXISTS sae5_6.incr_listens();
+
+
 -- Calcul echonest à partir des musiques favoris du user
 CREATE OR REPLACE FUNCTION sae5_6.calc_echonest_favoris()
 RETURNS TRIGGER AS $$
@@ -93,23 +99,24 @@ DECLARE
     v_album_id INT;
     v_artist_ID INT;
 BEGIN
-    SELECT sae5_6.album_id, sae5_6.artist_id
+    SELECT album_id, artist_id
     INTO v_album_id, v_artist_ID
-    FROM sae5_6.track
+    FROM sae5_6.realiser
     WHERE track_id = NEW.track_id;
 
     UPDATE sae5_6.track
     set track_listens = track_listens + 1
     WHERE track_id = NEW.track_id;
 
-
     UPDATE sae5_6.album
-    set album_listens = track_listens + 1
+    set album_listens = album_listens + 1
     WHERE album_id = v_album_id;
 
     UPDATE sae5_6.artist
     set artist_listens = artist_listens + 1
-    WHERE artist_id = v_album_id;
+    WHERE artist_id = v_artist_ID;
+
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
