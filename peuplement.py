@@ -151,6 +151,8 @@ def import_csv_to_db(csv_file_path):
                                 minutes = int(time_parts[0])
                                 seconds = int(time_parts[1])
                                 track_duration = minutes * 60 + seconds
+                            else:
+                                track_duration = track_duration_raw  # Valeur par défaut si le format est inattendu
 
                             track_date_created = process_date(row[headers.index('track_date_created')])
                             track_date_recorded = process_date(row[headers.index('track_date_recorded')])

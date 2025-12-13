@@ -159,6 +159,46 @@ def main():
     conn.commit()
     print("User language preference data imported.")
 
+    print("User favorite music data import completed.")
+    with open('user_data_clean/user_pref.csv', 'r') as file:
+        reader = csv.reader(file)
+        headers = next(reader)  # Passe l'entête
+        insert_query = """INSERT INTO sae5_6.ajoute_favori (user_id, track_id) VALUES %s"""
+        insert_query2 = """INSERT INTO sae5_6.user_prefere_artiste (user_id, artist_id) VALUES %s"""
+        insert_query3 = """INSERT INTO sae5_6.user_ajoute_album_favoris (user_id, album_id) VALUES %s"""
+        buffer = []
+        buffer2 = []
+        buffer3 = []
+        for row in reader:
+            user_id = int(row[headers.index('user_id')])
+            track_id = int(row[headers.index('track_id')])
+            album_id = int(row[headers.index('album_id')])
+            artist_id = int(row[headers.index('artist_id')])
+            buffer.append((user_id, track_id))
+            buffer2.append((user_id, artist_id))
+            buffer3.append((user_id, album_id))
+            if len(buffer) >= BATCH_SIZE:
+                psycopg2.extras.execute_values(cursor, insert_query, buffer)
+                buffer.clear()
+            if len(buffer2) >= BATCH_SIZE:
+                psycopg2.extras.execute_values(cursor, insert_query2, buffer2)
+                buffer2.clear()
+            if len(buffer3) >= BATCH_SIZE:
+                psycopg2.extras.execute_values(cursor, insert_query3, buffer3)
+                buffer3.clear()
+        # Insère les restants
+        if buffer:
+            psycopg2.extras.execute_values(cursor, insert_query, buffer)
+            buffer.clear()
+        if buffer2:
+            psycopg2.extras.execute_values(cursor, insert_query2, buffer2)
+            buffer2.clear()
+        if buffer3:
+            psycopg2.extras.execute_values(cursor, insert_query3, buffer3)
+            buffer3.clear()
+    conn.commit()
+    print("User favorite music data imported.")
+        
     print("All data imported successfully.")
 
     print("Delete import tables...")

@@ -14,7 +14,7 @@ def main():
     else:
         for filename in os.listdir("user_data_clean"):
             file_path = os.path.join("user_data_clean", filename)
-            if os.path.isfile(file_path) and filename.lower().endswith(".csv"):
+            if os.path.isfile(file_path) and filename.lower().endswith(".csv") and not filename.startswith("user_pref"):
                 os.remove(file_path)
 
     # --- FIX ---

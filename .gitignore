@@ -283,4 +283,7 @@ pyproject.toml
 uv.lock
 peuplement_server.py
 main_server.py
-user_data_clean/*.csv
+user_data_clean/parle.csv
+user_data_clean/user_genre*.csv
+user_data_clean/user_profile*.csv
+user_data_clean/user.csv

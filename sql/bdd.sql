@@ -61,8 +61,8 @@ CREATE TABLE sae5_6.album (
     album_handle VARCHAR(100),
     album_information TEXT,
     album_tracks INT DEFAULT 0,
-    album_producer VARCHAR(255),
-    album_engineer VARCHAR(255)
+    album_producer VARCHAR(510),
+    album_engineer VARCHAR(510)
 );
 
 CREATE TABLE sae5_6.genre (
