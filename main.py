@@ -163,9 +163,9 @@ def main():
     with open('user_data_clean/user_pref.csv', 'r') as file:
         reader = csv.reader(file)
         headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO sae5_6.ajoute_favori (user_id, track_id) VALUES %s"""
-        insert_query2 = """INSERT INTO sae5_6.user_prefere_artiste (user_id, artist_id) VALUES %s"""
-        insert_query3 = """INSERT INTO sae5_6.user_ajoute_album_favoris (user_id, album_id) VALUES %s"""
+        insert_query = """INSERT INTO sae5_6.ajoute_favori (user_id, track_id) VALUES %s ON CONFLICT DO NOTHING"""
+        insert_query2 = """INSERT INTO sae5_6.user_prefere_artiste (user_id, artist_id) VALUES %s ON CONFLICT DO NOTHING"""
+        insert_query3 = """INSERT INTO sae5_6.user_ajoute_album_favoris (user_id, album_id) VALUES %s ON CONFLICT DO NOTHING"""
         buffer = []
         buffer2 = []
         buffer3 = []
