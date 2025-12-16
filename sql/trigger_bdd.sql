@@ -3,6 +3,22 @@ DROP FUNCTION IF EXISTS sae5_6.calc_echonest_favoris();
 DROP TRIGGER IF EXISTS trg_calc_listens ON sae5_6.user_ecoute;
 DROP FUNCTION IF EXISTS sae5_6.incr_listens();
 
+-- permet l'obtention d'une distribution gaussienne
+CREATE OR REPLACE 
+FUNCTION sae5_6.gauss(max integer)
+ RETURNS double PRECISION
+ LANGUAGE plpgsql AS $$
+	DECLARE
+		rng float;
+	BEGIN
+		rng := 0;
+		FOR i IN 0.. max LOOP
+			rng := rng + random();
+		END LOOP;
+		RETURN rng;
+	END;
+$$;
+
 
 -- Calcul echonest à partir des musiques favoris du user
 CREATE OR REPLACE FUNCTION sae5_6.calc_echonest_favoris()
