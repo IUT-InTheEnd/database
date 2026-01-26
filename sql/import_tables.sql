@@ -1,6 +1,6 @@
 INSERT
 	INTO
-	sae5_6.artist
+	artist
 SELECT
 	artist_id::int,
 	artist_name,
@@ -19,7 +19,7 @@ SELECT
 		SELECT
 			sum(track_listens::int)
 		FROM
-			sae5_6.import_track it
+			import_track it
 		WHERE
 			it.artist_id = ia.artist_id
 	) AS artist_listens,
@@ -46,12 +46,12 @@ SELECT
 	TO_DATE(artist_date_created, 'DD-MM-YYYY') AS artist_date_created,
 	artist_image_file
 FROM
-	sae5_6.import_artist ia;
+	import_artist ia;
 
 
 INSERT
 	INTO
-	sae5_6.album
+	album
 SELECT
 	album_id::int,
 	album_title,
@@ -68,21 +68,21 @@ SELECT
 	album_producer,
 	album_engineer
 FROM
-	sae5_6.import_album;
+	import_album;
 
 INSERT
 	INTO
-	sae5_6.license
+	license
 SELECT
 	license_id::int,
 	license_title,
 	license_url
 FROM
-	sae5_6.import_license;
+	import_license;
 
 INSERT
 	INTO
-	sae5_6.track
+	track
 SELECT
 	track_id::int,
 	track_title,
@@ -110,11 +110,11 @@ SELECT
 	track_image_file,
 	license_id::int
 FROM
-	sae5_6.import_track it;
+	import_track it;
 
 INSERT
 	INTO
-	sae5_6.genre
+	genre
 SELECT
 	genre_id::int,
 	CASE
@@ -126,13 +126,13 @@ SELECT
 	genre_color,
 	top_level::bool
 FROM
-	sae5_6.import_genre
+	import_genre
 WHERE
 	top_level = 'true';
 
 INSERT
 	INTO
-	sae5_6.genre
+	genre
 SELECT
 	genre_id::int,
 	CASE
@@ -144,13 +144,13 @@ SELECT
 	genre_color,
 	top_level::bool
 FROM
-	sae5_6.import_genre
+	import_genre
 WHERE
 	top_level != 'true';
 
 INSERT
 	INTO
-	sae5_6.track_echonest
+	track_echonest
 SELECT
 	track_id::int,
 	acousticness::float,
@@ -167,51 +167,51 @@ SELECT
 	track_hottness::float,
 	track_currency::float
 FROM
-	sae5_6.import_echonest;
+	import_echonest;
 
 INSERT
 	INTO
-	sae5_6.contient_genres
+	contient_genres
 SELECT
 	track_id::int,
 	genre_id::int
 FROM
-	sae5_6.import_track_genre;
+	import_track_genre;
 
 INSERT
 	INTO
-	sae5_6.realiser
+	realiser
 SELECT
 	album_id::int,
 	track_id::int,
 	artist_id::int
 FROM
-	sae5_6.import_track;
+	import_track;
 
 INSERT
 	INTO
-	sae5_6.language
+	language
 SELECT
 	language_id::int,
 	language_name,
 	language_handle
 FROM
-	sae5_6.import_language;
+	import_language;
 
 INSERT
 	INTO
-	sae5_6.track_chanter_en
+	track_chanter_en
 SELECT
 	track_id::int,
 	language_id::int
 FROM
-	sae5_6.import_track;
+	import_track;
 
 INSERT
 	INTO
-	sae5_6.artiste_chante
+	artiste_chante
 SELECT
 	DISTINCT artist_id::int,
 	language_id::int
 FROM
-	sae5_6.import_track;
+	import_track;

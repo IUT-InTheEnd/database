@@ -53,19 +53,19 @@ def import_csv_to_db(csv_file_path):
     cursor = conn.cursor()
     match csv_file_path:
         case 'raw_artists':
-            table_name = ['sae5_6.import_artist']
+            table_name = ['import_artist']
             table_attributes = ['artist_id, artist_name, artist_location, artist_latitude, artist_longitude, artist_favorites, artist_comments, artist_active_year_begin, artist_active_year_end, artist_url, artist_website, artist_wikipedia_page, artist_handle, artist_bio, artist_members, artist_associated_labels, artist_related_projects, artist_contact, artist_donation_url, artist_paypal_name, artist_flattr_name, artist_date_created, artist_image_file']
         case 'raw_tracks':        
-            table_name = ['sae5_6.import_license', 'sae5_6.import_language', 'sae5_6.import_track',  'sae5_6.import_track_genre']
+            table_name = ['import_license', 'import_language', 'import_track',  'import_track_genre']
             table_attributes = ['license_id, license_title, license_url', 'language_id, language_code, language_name, language_handle', 'track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id, language_id', 'track_id, genre_id']
         case 'clean_echonest':       
-            table_name = ['sae5_6.import_echonest']
+            table_name = ['import_echonest']
             table_attributes = ['track_id, acousticness, energy, instrumentalness, liveness, speechiness, valence, danceability, tempo, artist_discovery, artist_hottness, artist_familiarity, track_hottness, track_currency']
         case 'raw_genres':
-            table_name = ['sae5_6.import_genre']
+            table_name = ['import_genre']
             table_attributes = ['genre_id, genre_parent_id, genre_title, genre_handle, genre_color, top_level']
         case 'raw_albums':
-            table_name = ['sae5_6.import_album']
+            table_name = ['import_album']
             table_attributes = ['album_id, album_title, album_date_release, album_date_created, album_listens, album_favorites, album_comments, album_type, album_url, album_handle, album_information, album_tracks, album_producer, album_engineer']
         case _:
             raise ValueError("Unknown CSV file path")
@@ -76,7 +76,7 @@ def import_csv_to_db(csv_file_path):
             reader = csv.reader(f)
             headers = next(reader)  # On suppose que la première ligne contient les en-têtes
             match table_name[i]:
-                case 'sae5_6.import_artist':
+                case 'import_artist':
                     if headers:
                         buffer = []
                         insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
@@ -112,7 +112,7 @@ def import_csv_to_db(csv_file_path):
                         if buffer:
                             psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 
-                case 'sae5_6.import_license':
+                case 'import_license':
                     license_id_counter = 1
                     license_id_map = {}
                     if headers:
@@ -131,7 +131,7 @@ def import_csv_to_db(csv_file_path):
                         if buffer:
                             psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 
-                case 'sae5_6.import_track':
+                case 'import_track':
                     if headers:
                         buffer = []
                         insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
@@ -188,7 +188,7 @@ def import_csv_to_db(csv_file_path):
                         if buffer:
                             psycopg2.extras.execute_values(cursor, insert_query, buffer)
                     
-                case 'sae5_6.import_echonest':
+                case 'import_echonest':
                     if headers:
                         buffer = []
                         insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
@@ -216,7 +216,7 @@ def import_csv_to_db(csv_file_path):
                         if buffer:
                             psycopg2.extras.execute_values(cursor, insert_query, buffer)
                     
-                case 'sae5_6.import_genre':
+                case 'import_genre':
                     if headers:
                         buffer = []
                         insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
@@ -234,7 +234,7 @@ def import_csv_to_db(csv_file_path):
                         if buffer:
                             psycopg2.extras.execute_values(cursor, insert_query, buffer)
                     
-                case 'sae5_6.import_album':
+                case 'import_album':
                     if headers:
                         buffer = []
                         insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"
@@ -261,7 +261,7 @@ def import_csv_to_db(csv_file_path):
                         if buffer:
                             psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 
-                case 'sae5_6.import_language':
+                case 'import_language':
                     country_code_list = []
                     language_id_counter = 1
                     if headers:
@@ -283,7 +283,7 @@ def import_csv_to_db(csv_file_path):
                         if buffer:
                             psycopg2.extras.execute_values(cursor, insert_query, buffer)
 
-                case 'sae5_6.import_track_genre':
+                case 'import_track_genre':
                     if headers:
                         buffer = []
                         insert_query = f"INSERT INTO {table_name[i]} ({table_attributes[i]}) VALUES %s"

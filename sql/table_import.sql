@@ -2,16 +2,16 @@
 -- Chaque table contient les colonnes provenant des fichiers "clean_*.csv"
 -- ainsi que des colonnes de métadonnées pour tracer l'importation.
 
-DROP TABLE IF EXISTS sae5_6.import_artist;
-DROP TABLE IF EXISTS sae5_6.import_album;
-DROP TABLE IF EXISTS sae5_6.import_track;
-DROP TABLE IF EXISTS sae5_6.import_genre;
-DROP TABLE IF EXISTS sae5_6.import_echonest;
-DROP TABLE IF EXISTS sae5_6.import_license;
-DROP TABLE IF EXISTS sae5_6.import_language;
-DROP TABLE IF EXISTS sae5_6.import_track_genre;
+DROP TABLE IF EXISTS import_artist;
+DROP TABLE IF EXISTS import_album;
+DROP TABLE IF EXISTS import_track;
+DROP TABLE IF EXISTS import_genre;
+DROP TABLE IF EXISTS import_echonest;
+DROP TABLE IF EXISTS import_license;
+DROP TABLE IF EXISTS import_language;
+DROP TABLE IF EXISTS import_track_genre;
 
-CREATE TABLE IF NOT EXISTS sae5_6.import_artist (
+CREATE TABLE IF NOT EXISTS import_artist (
     artist_id TEXT,
     artist_name TEXT,
     artist_location TEXT,
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS sae5_6.import_artist (
     artist_image_file TEXT
 );
 
-CREATE TABLE IF NOT EXISTS sae5_6.import_album (
+CREATE TABLE IF NOT EXISTS import_album (
 	album_id TEXT,
 	album_title TEXT,
 	album_date_release TEXT,
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS sae5_6.import_album (
 	album_image_file TEXT
 );
 
-CREATE TABLE IF NOT EXISTS sae5_6.import_track (
+CREATE TABLE IF NOT EXISTS import_track (
     track_id TEXT,
     track_title TEXT,
     track_duration TEXT,
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS sae5_6.import_track (
     language_id TEXT
 );
 
-CREATE TABLE IF NOT EXISTS sae5_6.import_genre (
+CREATE TABLE IF NOT EXISTS import_genre (
 	genre_id TEXT,
 	genre_parent_id TEXT,
 	genre_title TEXT,
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS sae5_6.import_genre (
 	top_level TEXT
 );
 
-CREATE TABLE IF NOT EXISTS sae5_6.import_echonest (
+CREATE TABLE IF NOT EXISTS import_echonest (
 	track_id TEXT,
 	acousticness TEXT,
 	energy TEXT,
@@ -110,20 +110,20 @@ CREATE TABLE IF NOT EXISTS sae5_6.import_echonest (
 	track_currency TEXT
 );
 
-CREATE TABLE IF NOT EXISTS sae5_6.import_license (
+CREATE TABLE IF NOT EXISTS import_license (
 	license_id TEXT,
 	license_title TEXT,
 	license_url TEXT
 );
 
-CREATE TABLE IF NOT EXISTS sae5_6.import_language (
+CREATE TABLE IF NOT EXISTS import_language (
     language_id TEXT,
 	language_code TEXT,
 	language_name TEXT,
 	language_handle TEXT
 );
 
-CREATE TABLE IF NOT EXISTS sae5_6.import_track_genre (
+CREATE TABLE IF NOT EXISTS import_track_genre (
     track_id TEXT,
     genre_id TEXT
 );

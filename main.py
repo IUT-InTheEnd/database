@@ -59,7 +59,7 @@ def main():
     with open('user_data_clean/user_profile.csv', 'r') as file:
         reader = csv.reader(file)
         headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO sae5_6.user_profile (user_profile_id, music_envy_today, feeling, music_preference, music_style_preference, music_reason, listening_context, current_music_type, usual_listening_mode, likes_discovery, attend_live_concert, repeat_listening, explicit_ok, avg_song_length, avg_daily_listen_time, recommanded_artists) VALUES %s"""
+        insert_query = """INSERT INTO user_profile (user_profile_id, music_envy_today, feeling, music_preference, music_style_preference, music_reason, listening_context, current_music_type, usual_listening_mode, likes_discovery, attend_live_concert, repeat_listening, explicit_ok, avg_song_length, avg_daily_listen_time, recommanded_artists) VALUES %s"""
         buffer = []
         for row in reader:
             user_profile_id = int(row[headers.index('user_profile_id')])
@@ -93,7 +93,7 @@ def main():
     with open('user_data_clean/user.csv', 'r') as file:
         reader = csv.reader(file)
         headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO sae5_6.user (user_id, user_age, user_job, user_plays_music, user_pseudo, user_password, user_gender, user_instruments, user_music_contexts, profile_id) VALUES %s"""
+        insert_query = """INSERT INTO users (id, name, email, password, user_age, user_job, user_plays_music, user_gender, user_instruments, user_music_contexts, profile_id) VALUES %s"""
         buffer = []
         for row in reader:
             # user_id,user_pseudo,user_password,user_age,user_job,user_gender,user_plays_music,user_instruments,user_music_contexts
@@ -108,7 +108,9 @@ def main():
             user_instruments = row[headers.index('user_instruments')]
             user_music_contexts = row[headers.index('user_music_contexts')]
             profile_id = user_id  # Même id que le profil
-            buffer.append((user_id, user_age, user_job, user_plays_music, user_pseudo, user_password, user_gender, user_instruments, user_music_contexts, profile_id))
+            # Laravel: id, name, email, password + custom fields
+            user_email = f"{user_pseudo}@example.com"
+            buffer.append((user_id, user_pseudo, user_email, user_password, user_age, user_job, user_plays_music, user_gender, user_instruments, user_music_contexts, profile_id))
             if len(buffer) >= BATCH_SIZE:
                 psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 buffer.clear()
@@ -123,7 +125,7 @@ def main():
     with open('user_data_clean/user_genres_favoris.csv', 'r') as file:
         reader = csv.reader(file)
         headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO sae5_6.ajoute_genre_favoris (user_id, genre_id) VALUES %s"""
+        insert_query = """INSERT INTO ajoute_genre_favoris (user_id, genre_id) VALUES %s"""
         buffer = []
         for row in reader:
             user_id = int(row[headers.index('user_id')])
@@ -143,7 +145,7 @@ def main():
     with open('user_data_clean/parle.csv', 'r') as file:
         reader = csv.reader(file)
         headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO sae5_6.user_parle (user_id, language_id) VALUES %s"""
+        insert_query = """INSERT INTO user_parle (user_id, language_id) VALUES %s"""
         buffer = []
         for row in reader:
             user_id = int(row[headers.index('user_id')])
@@ -163,9 +165,9 @@ def main():
     with open('user_data_clean/user_pref.csv', 'r') as file:
         reader = csv.reader(file)
         headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO sae5_6.ajoute_favori (user_id, track_id) VALUES %s ON CONFLICT DO NOTHING"""
-        insert_query2 = """INSERT INTO sae5_6.user_prefere_artiste (user_id, artist_id) VALUES %s ON CONFLICT DO NOTHING"""
-        insert_query3 = """INSERT INTO sae5_6.user_ajoute_album_favoris (user_id, album_id) VALUES %s ON CONFLICT DO NOTHING"""
+        insert_query = """INSERT INTO ajoute_favori (user_id, track_id) VALUES %s ON CONFLICT DO NOTHING"""
+        insert_query2 = """INSERT INTO user_prefere_artiste (user_id, artist_id) VALUES %s ON CONFLICT DO NOTHING"""
+        insert_query3 = """INSERT INTO user_ajoute_album_favoris (user_id, album_id) VALUES %s ON CONFLICT DO NOTHING"""
         buffer = []
         buffer2 = []
         buffer3 = []
@@ -204,14 +206,14 @@ def main():
     print("Delete import tables...")
     
     query = """
-        DROP TABLE IF EXISTS sae5_6.import_artist;
-        DROP TABLE IF EXISTS sae5_6.import_album;
-        DROP TABLE IF EXISTS sae5_6.import_track;
-        DROP TABLE IF EXISTS sae5_6.import_genre;
-        DROP TABLE IF EXISTS sae5_6.import_echonest;
-        DROP TABLE IF EXISTS sae5_6.import_license;
-        DROP TABLE IF EXISTS sae5_6.import_language;
-        DROP TABLE IF EXISTS sae5_6.import_track_genre;
+        DROP TABLE IF EXISTS import_artist;
+        DROP TABLE IF EXISTS import_album;
+        DROP TABLE IF EXISTS import_track;
+        DROP TABLE IF EXISTS import_genre;
+        DROP TABLE IF EXISTS import_echonest;
+        DROP TABLE IF EXISTS import_license;
+        DROP TABLE IF EXISTS import_language;
+        DROP TABLE IF EXISTS import_track_genre;
     """
     cursor.execute(query)
     conn.commit()

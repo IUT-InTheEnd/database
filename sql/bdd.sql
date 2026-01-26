@@ -1,7 +1,6 @@
-DROP SCHEMA IF EXISTS sae5_6 CASCADE;
-CREATE SCHEMA sae5_6;
+DROP TABLE users CASCADE;
 
-CREATE TABLE sae5_6.user_profile (
+CREATE TABLE user_profile (
     user_profile_id SERIAL PRIMARY KEY,
     music_envy_today TEXT NOT NULL,
     feeling INT NOT NULL,
@@ -20,23 +19,30 @@ CREATE TABLE sae5_6.user_profile (
     recommanded_artists TEXT    
 );
 
-CREATE TABLE sae5_6.user (
-    user_id SERIAL PRIMARY KEY,
-    user_age FLOAT NOT NULL,
+-- Laravel-compatible users table
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    email_verified_at TIMESTAMP NULL,
+    password VARCHAR(255) NOT NULL,
+    remember_token VARCHAR(100) NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    -- Custom fields
+    user_age FLOAT,
     user_job VARCHAR(100),
     user_plays_music TEXT,
-    user_pseudo VARCHAR(100) NOT NULL,
-    user_password TEXT NOT NULL,
     user_gender VARCHAR(100),
     user_instruments TEXT,
     user_music_contexts TEXT,
-    profile_id INT NOT NULL,
-    FOREIGN KEY (profile_id) REFERENCES sae5_6.user_profile(user_profile_id)
+    profile_id INT,
+    FOREIGN KEY (profile_id) REFERENCES user_profile(user_profile_id)
 );
 
 -- Recalcule avec trigger moyenne des musiques d'une playlist ou des playlist
-CREATE TABLE sae5_6.user_preference_echonest (
-    user_id INT PRIMARY KEY,
+CREATE TABLE user_preference_echonest (
+    user_id BIGINT PRIMARY KEY,
     acousticness FLOAT,
     energy FLOAT,
     instrumentalness FLOAT,
@@ -45,10 +51,10 @@ CREATE TABLE sae5_6.user_preference_echonest (
     valence FLOAT,
     danceability FLOAT,
     tempo FLOAT,
-    FOREIGN KEY (user_id) REFERENCES sae5_6.user(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE sae5_6.album (
+CREATE TABLE album (
     album_id SERIAL PRIMARY KEY,
     album_title VARCHAR(255) NOT NULL,
     album_date_release DATE,
@@ -65,7 +71,7 @@ CREATE TABLE sae5_6.album (
     album_engineer VARCHAR(510)
 );
 
-CREATE TABLE sae5_6.genre (
+CREATE TABLE genre (
     genre_id SERIAL PRIMARY KEY,
     genre_parent_id INT,
     genre_title VARCHAR(100) NOT NULL,
@@ -74,13 +80,13 @@ CREATE TABLE sae5_6.genre (
     top_level BOOLEAN DEFAULT TRUE
 );
 
-CREATE TABLE sae5_6.license (
+CREATE TABLE license (
     license_id SERIAL PRIMARY KEY,
     license_title VARCHAR(100) NOT NULL,
     license_url VARCHAR(255)
 );
 
-CREATE TABLE sae5_6.track (
+CREATE TABLE track (
     track_id SERIAL PRIMARY KEY,
     track_title VARCHAR(255) NOT NULL,
     track_duration INT,
@@ -103,10 +109,10 @@ CREATE TABLE sae5_6.track (
     track_file VARCHAR(255),
     track_image_file VARCHAR(255),
     license_id INT,
-    FOREIGN KEY (license_id) REFERENCES sae5_6.license(license_id)
+    FOREIGN KEY (license_id) REFERENCES license(license_id)
 );
 
-CREATE TABLE sae5_6.track_echonest (
+CREATE TABLE track_echonest (
     track_id SERIAL PRIMARY KEY,
     acousticness FLOAT,
     energy FLOAT,
@@ -121,10 +127,10 @@ CREATE TABLE sae5_6.track_echonest (
     artist_familiarity FLOAT,
     track_hottness FLOAT,
     track_currency FLOAT,
-    FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id)
+    FOREIGN KEY (track_id) REFERENCES track(track_id)
 );
 
-CREATE TABLE sae5_6.artist (
+CREATE TABLE artist (
     artist_id SERIAL PRIMARY KEY,
     artist_name VARCHAR(255) NOT NULL,
     artist_location VARCHAR(511),
@@ -151,103 +157,103 @@ CREATE TABLE sae5_6.artist (
     artist_image_file VARCHAR(255)
 );
 
-CREATE TABLE sae5_6.language (
+CREATE TABLE language (
     language_id SERIAL PRIMARY KEY,
     language_label VARCHAR(100) NOT NULL,
     language_handle VARCHAR(50)
 );
 
-CREATE TABLE sae5_6.playlist (
+CREATE TABLE playlist (
     playlist_id SERIAL PRIMARY KEY,
     playlist_name VARCHAR(255) NOT NULL,
     track_id INT,
-    FOREIGN KEY (track_id) REFERENCES sae5_6.track(track_id)
+    FOREIGN KEY (track_id) REFERENCES track(track_id)
 );
 
 -- Relation Tables
 
-CREATE TABLE sae5_6.playlist_contient_track (
-    playlist_id INT REFERENCES sae5_6.playlist(playlist_id),
-    track_id INT REFERENCES sae5_6.track(track_id),
+CREATE TABLE playlist_contient_track (
+    playlist_id INT REFERENCES playlist(playlist_id),
+    track_id INT REFERENCES track(track_id),
     PRIMARY KEY (playlist_id, track_id)
 );
 
-CREATE TABLE sae5_6.possede_playlist (
-    user_id INT REFERENCES sae5_6.user(user_id),
-    playlist_id INT REFERENCES sae5_6.playlist(playlist_id),
+CREATE TABLE possede_playlist (
+    user_id BIGINT REFERENCES users(id),
+    playlist_id INT REFERENCES playlist(playlist_id),
     PRIMARY KEY (user_id, playlist_id)
 );
 
-CREATE TABLE sae5_6.represente (
-    user_id INT REFERENCES sae5_6.user(user_id),
-    user_id_echonest INT REFERENCES sae5_6.user_preference_echonest(user_id),
+CREATE TABLE represente (
+    user_id BIGINT REFERENCES users(id),
+    user_id_echonest BIGINT REFERENCES user_preference_echonest(user_id),
     PRIMARY KEY (user_id, user_id_echonest)
 );
 
-CREATE TABLE sae5_6.user_parle (
-    user_id INT REFERENCES sae5_6.user(user_id),
-    language_id INT REFERENCES sae5_6.language(language_id),
+CREATE TABLE user_parle (
+    user_id BIGINT REFERENCES users(id),
+    language_id INT REFERENCES language(language_id),
     PRIMARY KEY (user_id, language_id)
 );
 
-CREATE TABLE sae5_6.artiste_chante (
-    artist_id INT REFERENCES sae5_6.artist(artist_id),
-    language_id INT REFERENCES sae5_6.language(language_id),
+CREATE TABLE artiste_chante (
+    artist_id INT REFERENCES artist(artist_id),
+    language_id INT REFERENCES language(language_id),
     PRIMARY KEY (artist_id, language_id)
 );
 
-CREATE TABLE sae5_6.track_chanter_en (
-    track_id INT REFERENCES sae5_6.track(track_id),
-    language_id INT REFERENCES sae5_6.language(language_id),
+CREATE TABLE track_chanter_en (
+    track_id INT REFERENCES track(track_id),
+    language_id INT REFERENCES language(language_id),
     PRIMARY KEY (track_id, language_id)
 );
 
-CREATE TABLE sae5_6.realiser (
-    album_id INT NOT NULL REFERENCES sae5_6.album(album_id),
-    track_id INT REFERENCES sae5_6.track(track_id),
-    artist_id INT NOT NULL REFERENCES sae5_6.artist(artist_id),
+CREATE TABLE realiser (
+    album_id INT NOT NULL REFERENCES album(album_id),
+    track_id INT REFERENCES track(track_id),
+    artist_id INT NOT NULL REFERENCES artist(artist_id),
     PRIMARY KEY (album_id, track_id, artist_id)
 );
 
-CREATE TABLE sae5_6.user_prefere_artiste (
-    artist_id INT REFERENCES sae5_6.artist(artist_id),
-    user_id INT REFERENCES sae5_6.user(user_id),
+CREATE TABLE user_prefere_artiste (
+    artist_id INT REFERENCES artist(artist_id),
+    user_id BIGINT REFERENCES users(id),
     PRIMARY KEY (artist_id, user_id)
 );
 
-CREATE TABLE sae5_6.contient_genres (
-    track_id INT REFERENCES sae5_6.track(track_id),
-    genre_id INT REFERENCES sae5_6.genre(genre_id),
+CREATE TABLE contient_genres (
+    track_id INT REFERENCES track(track_id),
+    genre_id INT REFERENCES genre(genre_id),
     PRIMARY KEY (track_id, genre_id)
 );
 
-CREATE TABLE sae5_6.supervise(
-    parent_id INT REFERENCES sae5_6.genre(genre_id),
-    child_id INT REFERENCES sae5_6.genre(genre_id),
+CREATE TABLE supervise(
+    parent_id INT REFERENCES genre(genre_id),
+    child_id INT REFERENCES genre(genre_id),
     PRIMARY KEY (parent_id, child_id)
 );
 
-CREATE TABLE sae5_6.ajoute_favori (
-    user_id INT REFERENCES sae5_6.user(user_id),
-    track_id INT REFERENCES sae5_6.track(track_id),
+CREATE TABLE ajoute_favori (
+    user_id BIGINT REFERENCES users(id),
+    track_id INT REFERENCES track(track_id),
     PRIMARY KEY (user_id, track_id)
 );
 
-CREATE TABLE sae5_6.ajoute_genre_favoris (
-    user_id INT REFERENCES sae5_6.user(user_id),
-    genre_id INT REFERENCES sae5_6.genre(genre_id),
+CREATE TABLE ajoute_genre_favoris (
+    user_id BIGINT REFERENCES users(id),
+    genre_id INT REFERENCES genre(genre_id),
     PRIMARY KEY (user_id, genre_id)
 );
 
-CREATE TABLE sae5_6.user_ajoute_album_favoris (
-    user_id INT REFERENCES sae5_6.user(user_id),
-    album_id INT REFERENCES sae5_6.album(album_id),
+CREATE TABLE user_ajoute_album_favoris (
+    user_id BIGINT REFERENCES users(id),
+    album_id INT REFERENCES album(album_id),
     PRIMARY KEY (user_id, album_id)
 );
 
-CREATE TABLE sae5_6.user_ecoute (
-    user_id INT REFERENCES sae5_6.user(user_id),
-    track_id INT REFERENCES sae5_6.track(track_id),
+CREATE TABLE user_ecoute (
+    user_id BIGINT REFERENCES users(id),
+    track_id INT REFERENCES track(track_id),
     nb_ecoute INT DEFAULT 0,
     PRIMARY KEY (user_id, track_id)
 );
