@@ -44,7 +44,7 @@ def main():
     conn.commit()
     print("Tables imported.")
 
-    # Lancement du script qui crée les csv nettoyés pour l'import des users
+    # Lancement du script qui crée les csv nettoyés pour l'import des user
     print("Generating cleaned CSV files for user data...")
     import user
     user.main()
@@ -89,28 +89,25 @@ def main():
     conn.commit()
     print("User profile data imported.")
 
-    # Import des users
+    # Import des user
     with open('user_data_clean/user.csv', 'r') as file:
         reader = csv.reader(file)
         headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO users (id, name, email, password, user_age, user_job, user_plays_music, user_gender, user_instruments, user_music_contexts, profile_id) VALUES %s"""
+        insert_query = """INSERT INTO "user" (user_id, user_pseudo, user_age, user_job, user_plays_music, user_gender, user_instruments, user_music_contexts, profile_id) VALUES %s"""
         buffer = []
         for row in reader:
-            # user_id,user_pseudo,user_password,user_age,user_job,user_gender,user_plays_music,user_instruments,user_music_contexts
-            # 1,user_1,pass_1,21.0,Employé(e) à plein temps,Homme,1.0,['Guitare / Basse / Banjo'],"['Travail / études', 'Trajet', 'Détente', 'Jeu vidéo']"
+            # user_id,user_pseudo,user_age,user_job,user_gender,user_plays_music,user_instruments,user_music_contexts
+            # 1,user_1,21.0,Employé(e) à plein temps,Homme,1.0,['Guitare / Basse / Banjo'],"['Travail / études', 'Trajet', 'Détente', 'Jeu vidéo']"
             user_id = int(row[headers.index('user_id')])
             user_age = float(row[headers.index('user_age')])
             user_job = row[headers.index('user_job')]
             user_plays_music = 1 if row[headers.index('user_plays_music')] == '1.0' else 0
             user_pseudo = row[headers.index('user_pseudo')]
-            user_password = row[headers.index('user_password')]
             user_gender = row[headers.index('user_gender')]
             user_instruments = row[headers.index('user_instruments')]
             user_music_contexts = row[headers.index('user_music_contexts')]
             profile_id = user_id  # Même id que le profil
-            # Laravel: id, name, email, password + custom fields
-            user_email = f"{user_pseudo}@example.com"
-            buffer.append((user_id, user_pseudo, user_email, user_password, user_age, user_job, user_plays_music, user_gender, user_instruments, user_music_contexts, profile_id))
+            buffer.append((user_id, user_pseudo, user_age, user_job, user_plays_music, user_gender, user_instruments, user_music_contexts, profile_id))
             if len(buffer) >= BATCH_SIZE:
                 psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 buffer.clear()
@@ -121,7 +118,7 @@ def main():
     conn.commit()
     print("User data imported.")
 
-    # Import des genres favoris des users
+    # Import des genres favoris des user
     with open('user_data_clean/user_genres_favoris.csv', 'r') as file:
         reader = csv.reader(file)
         headers = next(reader)  # Passe l'entête
@@ -141,7 +138,7 @@ def main():
     conn.commit()
     print("User favorite genre data imported.")
 
-    # Import de la langue préférée des users
+    # Import de la langue préférée des user
     with open('user_data_clean/parle.csv', 'r') as file:
         reader = csv.reader(file)
         headers = next(reader)  # Passe l'entête

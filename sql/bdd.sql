@@ -1,4 +1,28 @@
-DROP TABLE users CASCADE;
+DROP TABLE IF EXISTS user_ecoute CASCADE;
+DROP TABLE IF EXISTS user_ajoute_album_favoris CASCADE;
+DROP TABLE IF EXISTS ajoute_genre_favoris CASCADE;
+DROP TABLE IF EXISTS ajoute_favori CASCADE;
+DROP TABLE IF EXISTS supervise CASCADE;
+DROP TABLE IF EXISTS contient_genres CASCADE;
+DROP TABLE IF EXISTS user_prefere_artiste CASCADE;
+DROP TABLE IF EXISTS realiser CASCADE;
+DROP TABLE IF EXISTS track_chanter_en CASCADE;
+DROP TABLE IF EXISTS artiste_chante CASCADE;
+DROP TABLE IF EXISTS user_parle CASCADE;
+DROP TABLE IF EXISTS possede_playlist CASCADE;
+DROP TABLE IF EXISTS playlist_contient_track CASCADE;
+DROP TABLE IF EXISTS playlist CASCADE;
+DROP TABLE IF EXISTS track_echonest CASCADE;
+DROP TABLE IF EXISTS track CASCADE;
+DROP TABLE IF EXISTS license CASCADE;
+DROP TABLE IF EXISTS genre CASCADE;
+DROP TABLE IF EXISTS album CASCADE;
+DROP TABLE IF EXISTS user_preference_echonest CASCADE;
+DROP TABLE IF EXISTS represente CASCADE;
+DROP TABLE IF EXISTS "user" CASCADE;
+DROP TABLE IF EXISTS user_profile CASCADE;
+DROP TABLE IF EXISTS artist CASCADE;
+DROP TABLE IF EXISTS language CASCADE;
 
 CREATE TABLE user_profile (
     user_profile_id SERIAL PRIMARY KEY,
@@ -19,24 +43,16 @@ CREATE TABLE user_profile (
     recommanded_artists TEXT    
 );
 
--- Laravel-compatible users table
-CREATE TABLE users (
-    id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    email_verified_at TIMESTAMP NULL,
-    password VARCHAR(255) NOT NULL,
-    remember_token VARCHAR(100) NULL,
-    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-    -- Custom fields
-    user_age FLOAT,
+CREATE TABLE "user" (
+    user_id SERIAL PRIMARY KEY,
+    user_pseudo VARCHAR(100) NOT NULL,
+    user_age FLOAT NOT NULL,
     user_job VARCHAR(100),
     user_plays_music TEXT,
     user_gender VARCHAR(100),
     user_instruments TEXT,
     user_music_contexts TEXT,
-    profile_id INT,
+    profile_id INT NOT NULL,
     FOREIGN KEY (profile_id) REFERENCES user_profile(user_profile_id)
 );
 
@@ -51,7 +67,7 @@ CREATE TABLE user_preference_echonest (
     valence FLOAT,
     danceability FLOAT,
     tempo FLOAT,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES "user"(user_id)
 );
 
 CREATE TABLE album (
@@ -179,19 +195,19 @@ CREATE TABLE playlist_contient_track (
 );
 
 CREATE TABLE possede_playlist (
-    user_id BIGINT REFERENCES users(id),
+    user_id BIGINT REFERENCES "user"(user_id),
     playlist_id INT REFERENCES playlist(playlist_id),
     PRIMARY KEY (user_id, playlist_id)
 );
 
 CREATE TABLE represente (
-    user_id BIGINT REFERENCES users(id),
+    user_id BIGINT REFERENCES "user"(user_id),
     user_id_echonest BIGINT REFERENCES user_preference_echonest(user_id),
     PRIMARY KEY (user_id, user_id_echonest)
 );
 
 CREATE TABLE user_parle (
-    user_id BIGINT REFERENCES users(id),
+    user_id BIGINT REFERENCES "user"(user_id),
     language_id INT REFERENCES language(language_id),
     PRIMARY KEY (user_id, language_id)
 );
@@ -217,7 +233,7 @@ CREATE TABLE realiser (
 
 CREATE TABLE user_prefere_artiste (
     artist_id INT REFERENCES artist(artist_id),
-    user_id BIGINT REFERENCES users(id),
+    user_id BIGINT REFERENCES "user"(user_id),
     PRIMARY KEY (artist_id, user_id)
 );
 
@@ -234,25 +250,25 @@ CREATE TABLE supervise(
 );
 
 CREATE TABLE ajoute_favori (
-    user_id BIGINT REFERENCES users(id),
+    user_id BIGINT REFERENCES "user"(user_id),
     track_id INT REFERENCES track(track_id),
     PRIMARY KEY (user_id, track_id)
 );
 
 CREATE TABLE ajoute_genre_favoris (
-    user_id BIGINT REFERENCES users(id),
+    user_id BIGINT REFERENCES "user"(user_id),
     genre_id INT REFERENCES genre(genre_id),
     PRIMARY KEY (user_id, genre_id)
 );
 
 CREATE TABLE user_ajoute_album_favoris (
-    user_id BIGINT REFERENCES users(id),
+    user_id BIGINT REFERENCES "user"(user_id),
     album_id INT REFERENCES album(album_id),
     PRIMARY KEY (user_id, album_id)
 );
 
 CREATE TABLE user_ecoute (
-    user_id BIGINT REFERENCES users(id),
+    user_id BIGINT REFERENCES "user"(user_id),
     track_id INT REFERENCES track(track_id),
     nb_ecoute INT DEFAULT 0,
     PRIMARY KEY (user_id, track_id)

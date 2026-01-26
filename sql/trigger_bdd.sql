@@ -5,7 +5,7 @@ DROP FUNCTION IF EXISTS incr_listens();
 
 -- permet l'obtention d'une distribution gaussienne
 CREATE OR REPLACE 
-FUNCTION sae5_6.gauss(max integer)
+FUNCTION gauss(max integer)
  RETURNS double PRECISION
  LANGUAGE plpgsql AS $$
 	DECLARE
