@@ -2,8 +2,10 @@ import csv
 import psycopg2
 import psycopg2.extras
 import re
+import link_fix
 from langcodes import *
 from datetime import datetime
+import link_fix
 
 # Nombre de lignes à insérer par batch
 BATCH_SIZE = 1000
@@ -52,10 +54,10 @@ def import_csv_to_db(csv_file_path):
     conn = connection_db()
     cursor = conn.cursor()
     match csv_file_path:
-        case 'raw_artists':
+        case 'link_fix_raw_artists':
             table_name = ['import_artist']
             table_attributes = ['artist_id, artist_name, artist_location, artist_latitude, artist_longitude, artist_favorites, artist_comments, artist_active_year_begin, artist_active_year_end, artist_url, artist_website, artist_wikipedia_page, artist_handle, artist_bio, artist_members, artist_associated_labels, artist_related_projects, artist_contact, artist_donation_url, artist_paypal_name, artist_flattr_name, artist_date_created, artist_image_file']
-        case 'raw_tracks':        
+        case 'link_fix_raw_tracks':        
             table_name = ['import_license', 'import_language', 'import_track',  'import_track_genre']
             table_attributes = ['license_id, license_title, license_url', 'language_id, language_code, language_name, language_handle', 'track_id, track_title, track_duration, track_date_created, track_date_recorded, track_composer, track_lyricist, track_publisher, track_listens, track_favorites, track_comments, track_interest, track_copyright_c, track_copyright_p, track_explicit, track_explicit_note, track_instrumental, track_language_code, track_url, track_file, track_image_file, license_id, artist_id, album_id, language_id', 'track_id, genre_id']
         case 'clean_echonest':       
@@ -324,7 +326,7 @@ def main():
     conn.close()
     print("Import tables created successfully.")
 
-    csvs = ['raw_albums', 'raw_artists', 'raw_tracks', 'clean_echonest', 'raw_genres']
+    csvs = ['raw_albums', 'link_fix_raw_artists', 'link_fix_raw_tracks', 'clean_echonest', 'raw_genres']
     for csv_file in csvs:
         import_csv_to_db(csv_file)
 
