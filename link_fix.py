@@ -3,7 +3,7 @@ import os
 
 # fix links raw tracks
 if os.path.exists("./dataset/link_fix_raw_tracks.csv") == False:
-    df1 = pd.read_csv("./dataset/raw_tracks.csv")
+    df1 = pd.read_csv("./dataset/raw_tracks.csv", dtype=str)
 
     df1.loc[df1["track_file"].notna(), "track_file"] = (
         "https://files.freemusicarchive.org/storage-freemusicarchive-org/"
@@ -21,7 +21,7 @@ if os.path.exists("./dataset/link_fix_raw_tracks.csv") == False:
 
 # fix links raw artists
 if os.path.exists("./dataset/link_fix_raw_artists.csv") == False:
-    df2 = pd.read_csv("./dataset/raw_artists.csv")
+    df2 = pd.read_csv("./dataset/raw_artists.csv", dtype=str)
 
     df2.loc[df2["artist_image_file"].notna(), "artist_image_file"] = (
         "https://files.freemusicarchive.org/storage-freemusicarchive-org/"
@@ -33,7 +33,7 @@ if os.path.exists("./dataset/link_fix_raw_artists.csv") == False:
 
 # fix links raw albums
 if os.path.exists("./dataset/link_fix_raw_albums.csv") == False:
-    df3 = pd.read_csv("./dataset/raw_albums.csv")
+    df3 = pd.read_csv("./dataset/raw_albums.csv", dtype=str)
     
     df3.loc[df3["album_image_file"].notna(), "album_image_file"] = (
         "https://files.freemusicarchive.org/storage-freemusicarchive-org/"

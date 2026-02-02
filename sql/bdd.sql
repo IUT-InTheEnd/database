@@ -44,15 +44,26 @@ CREATE TABLE user_profile (
 );
 
 CREATE TABLE "user" (
-    user_id SERIAL PRIMARY KEY,
-    user_pseudo VARCHAR(100) NOT NULL,
-    user_age FLOAT NOT NULL,
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    email_verified_at TIMESTAMP NULL,
+    password VARCHAR(255) NOT NULL,
+    remember_token VARCHAR(100) NULL,
+    two_factor_secret TEXT NULL,
+    two_factor_recovery_codes TEXT NULL,
+    two_factor_confirmed_at TIMESTAMP NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Colonnes personnalisées
+    user_age FLOAT,
     user_job VARCHAR(100),
     user_plays_music TEXT,
     user_gender VARCHAR(100),
     user_instruments TEXT,
     user_music_contexts TEXT,
-    profile_id INT NOT NULL,
+    profile_id INT,
     FOREIGN KEY (profile_id) REFERENCES user_profile(user_profile_id)
 );
 
@@ -67,7 +78,7 @@ CREATE TABLE user_preference_echonest (
     valence FLOAT,
     danceability FLOAT,
     tempo FLOAT,
-    FOREIGN KEY (user_id) REFERENCES "user"(user_id)
+    FOREIGN KEY (user_id) REFERENCES "user"(id)
 );
 
 CREATE TABLE album (
@@ -79,7 +90,7 @@ CREATE TABLE album (
     album_favorites INT DEFAULT 0,
     album_comments INT DEFAULT 0,
     album_type VARCHAR(50),
-    album_url VARCHAR(255),
+    album_url VARCHAR(512),
     album_handle VARCHAR(100),
     album_information TEXT,
     album_tracks INT DEFAULT 0,
@@ -99,7 +110,7 @@ CREATE TABLE genre (
 CREATE TABLE license (
     license_id SERIAL PRIMARY KEY,
     license_title VARCHAR(100) NOT NULL,
-    license_url VARCHAR(255)
+    license_url VARCHAR(512)
 );
 
 CREATE TABLE track (
@@ -122,8 +133,8 @@ CREATE TABLE track (
     track_instrumental BOOLEAN DEFAULT FALSE,
     track_language_code VARCHAR(10),
     track_url VARCHAR(1023),
-    track_file VARCHAR(255),
-    track_image_file VARCHAR(255),
+    track_file VARCHAR(512),
+    track_image_file VARCHAR(512),
     license_id INT,
     FOREIGN KEY (license_id) REFERENCES license(license_id)
 );
@@ -157,20 +168,20 @@ CREATE TABLE artist (
     artist_listens INT DEFAULT 0,
     artist_active_year_begin INT,
     artist_active_year_end INT,
-    artist_url VARCHAR(255),
-    artist_website VARCHAR(255),
-    artist_wikipedia_page VARCHAR(255),
+    artist_url VARCHAR(512),
+    artist_website VARCHAR(512),
+    artist_wikipedia_page VARCHAR(512),
     artist_handle VARCHAR(100),
     artist_bio TEXT,
     artist_members TEXT,
     artist_associated_labels TEXT,
     artist_related_projects TEXT,
     artist_contact TEXT,
-    artist_donation_url VARCHAR(255),
+    artist_donation_url VARCHAR(512),
     artist_paypal_name VARCHAR(100),
     artist_flattr_name VARCHAR(100),
     artist_date_created DATE,
-    artist_image_file VARCHAR(255)
+    artist_image_file VARCHAR(512)
 );
 
 CREATE TABLE language (
@@ -195,19 +206,19 @@ CREATE TABLE playlist_contient_track (
 );
 
 CREATE TABLE possede_playlist (
-    user_id BIGINT REFERENCES "user"(user_id),
+    user_id BIGINT REFERENCES "user"(id),
     playlist_id INT REFERENCES playlist(playlist_id),
     PRIMARY KEY (user_id, playlist_id)
 );
 
 CREATE TABLE represente (
-    user_id BIGINT REFERENCES "user"(user_id),
+    user_id BIGINT REFERENCES "user"(id),
     user_id_echonest BIGINT REFERENCES user_preference_echonest(user_id),
     PRIMARY KEY (user_id, user_id_echonest)
 );
 
 CREATE TABLE user_parle (
-    user_id BIGINT REFERENCES "user"(user_id),
+    user_id BIGINT REFERENCES "user"(id),
     language_id INT REFERENCES language(language_id),
     PRIMARY KEY (user_id, language_id)
 );
@@ -233,7 +244,7 @@ CREATE TABLE realiser (
 
 CREATE TABLE user_prefere_artiste (
     artist_id INT REFERENCES artist(artist_id),
-    user_id BIGINT REFERENCES "user"(user_id),
+    user_id BIGINT REFERENCES "user"(id),
     PRIMARY KEY (artist_id, user_id)
 );
 
@@ -250,25 +261,25 @@ CREATE TABLE supervise(
 );
 
 CREATE TABLE ajoute_favori (
-    user_id BIGINT REFERENCES "user"(user_id),
+    user_id BIGINT REFERENCES "user"(id),
     track_id INT REFERENCES track(track_id),
     PRIMARY KEY (user_id, track_id)
 );
 
 CREATE TABLE ajoute_genre_favoris (
-    user_id BIGINT REFERENCES "user"(user_id),
+    user_id BIGINT REFERENCES "user"(id),
     genre_id INT REFERENCES genre(genre_id),
     PRIMARY KEY (user_id, genre_id)
 );
 
 CREATE TABLE user_ajoute_album_favoris (
-    user_id BIGINT REFERENCES "user"(user_id),
+    user_id BIGINT REFERENCES "user"(id),
     album_id INT REFERENCES album(album_id),
     PRIMARY KEY (user_id, album_id)
 );
 
 CREATE TABLE user_ecoute (
-    user_id BIGINT REFERENCES "user"(user_id),
+    user_id BIGINT REFERENCES "user"(id),
     track_id INT REFERENCES track(track_id),
     nb_ecoute INT DEFAULT 0,
     PRIMARY KEY (user_id, track_id)

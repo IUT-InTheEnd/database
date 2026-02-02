@@ -89,25 +89,30 @@ def main():
     conn.commit()
     print("User profile data imported.")
 
-    # Import des user
+    # Import des user (compatible Laravel)
     with open('user_data_clean/user.csv', 'r') as file:
         reader = csv.reader(file)
         headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO "user" (user_id, user_pseudo, user_age, user_job, user_plays_music, user_gender, user_instruments, user_music_contexts, profile_id) VALUES %s"""
+        insert_query = """INSERT INTO "user" (id, name, email, email_verified_at, password, remember_token, created_at, updated_at, user_age, user_job, user_plays_music, user_gender, user_instruments, user_music_contexts, profile_id) VALUES %s"""
         buffer = []
         for row in reader:
-            # user_id,user_pseudo,user_age,user_job,user_gender,user_plays_music,user_instruments,user_music_contexts
-            # 1,user_1,21.0,Employé(e) à plein temps,Homme,1.0,['Guitare / Basse / Banjo'],"['Travail / études', 'Trajet', 'Détente', 'Jeu vidéo']"
-            user_id = int(row[headers.index('user_id')])
+            # id,name,email,email_verified_at,password,remember_token,created_at,updated_at,user_age,user_job,user_gender,user_plays_music,user_instruments,user_music_contexts,profile_id
+            user_id = int(row[headers.index('id')])
+            name = row[headers.index('name')]
+            email = row[headers.index('email')]
+            email_verified_at = row[headers.index('email_verified_at')] if row[headers.index('email_verified_at')] else None
+            password = row[headers.index('password')]
+            remember_token = row[headers.index('remember_token')] if row[headers.index('remember_token')] else None
+            created_at = row[headers.index('created_at')] if row[headers.index('created_at')] else None
+            updated_at = row[headers.index('updated_at')] if row[headers.index('updated_at')] else None
             user_age = float(row[headers.index('user_age')])
             user_job = row[headers.index('user_job')]
             user_plays_music = 1 if row[headers.index('user_plays_music')] == '1.0' else 0
-            user_pseudo = row[headers.index('user_pseudo')]
             user_gender = row[headers.index('user_gender')]
             user_instruments = row[headers.index('user_instruments')]
             user_music_contexts = row[headers.index('user_music_contexts')]
-            profile_id = user_id  # Même id que le profil
-            buffer.append((user_id, user_pseudo, user_age, user_job, user_plays_music, user_gender, user_instruments, user_music_contexts, profile_id))
+            profile_id = int(row[headers.index('profile_id')])
+            buffer.append((user_id, name, email, email_verified_at, password, remember_token, created_at, updated_at, user_age, user_job, user_plays_music, user_gender, user_instruments, user_music_contexts, profile_id))
             if len(buffer) >= BATCH_SIZE:
                 psycopg2.extras.execute_values(cursor, insert_query, buffer)
                 buffer.clear()

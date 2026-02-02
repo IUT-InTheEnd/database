@@ -4,6 +4,8 @@ import ast
 import csv
 import math
 import os
+from datetime import datetime
+import bcrypt
 
 def main():
     df = pd.read_csv("dataset/clean_answers.csv")
@@ -22,11 +24,20 @@ def main():
     if "user_id" not in df.columns:
         df.insert(0, "user_id", range(1, len(df) + 1))
 
-    def generate_pseudo(user_id):
-        return f"user_{user_id}"
+    def generate_name(user_id):
+        return f"User {user_id}"
 
-    def generate_password(user_id):
-        return f"pass_{user_id}"
+    def generate_email(user_id):
+        return f"user{user_id}@example.com"
+
+    def generate_password_hash(user_id):
+        # Hash du mot de passe compatible avec Laravel (bcrypt)
+        password = f"password{user_id}"
+        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    def generate_timestamp():
+        # Format timestamp compatible PostgreSQL/Laravel
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # --- MAPPINGS utils pour le système de recommandation ---
 
@@ -110,22 +121,29 @@ def main():
 
 
     # ---------------------------------------------------------
-    # TABLE USER
+    # TABLE USER (compatible Laravel)
     # ---------------------------------------------------------
 
     user_rows = [] # liste pour la création du CSV
+    current_timestamp = generate_timestamp()
 
     for _, row in df.iterrows(): #_ pour ignorer l'index obligatoire pour le iterrows
         user_rows.append({
-            "user_id": row["user_id"],
-            "user_pseudo": generate_pseudo(row["user_id"]),
-            "user_password": generate_password(row["user_id"]),
+            "id": row["user_id"],
+            "name": generate_name(row["user_id"]),
+            "email": generate_email(row["user_id"]),
+            "email_verified_at": current_timestamp,
+            "password": generate_password_hash(row["user_id"]),
+            "remember_token": None,
+            "created_at": current_timestamp,
+            "updated_at": current_timestamp,
             "user_age": row["age"],
             "user_job": row["job_status"],
             "user_gender": row["gender"],
             "user_plays_music": row["plays_music"],
             "user_instruments": row["instruments"],
-            "user_music_contexts": row["listening_contexts"]
+            "user_music_contexts": row["listening_contexts"],
+            "profile_id": row["user_id"]
         })
 
     # création du CSV
