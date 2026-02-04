@@ -66,7 +66,7 @@ def import_csv_to_db(csv_file_path):
         case 'raw_genres':
             table_name = ['import_genre']
             table_attributes = ['genre_id, genre_parent_id, genre_title, genre_handle, genre_color, top_level']
-        case 'raw_albums':
+        case 'link_fix_raw_albums':
             table_name = ['import_album']
             table_attributes = ['album_id, album_title, album_date_release, album_date_created, album_listens, album_favorites, album_comments, album_type, album_url, album_handle, album_information, album_tracks, album_producer, album_engineer']
         case _:
@@ -326,7 +326,7 @@ def main():
     conn.close()
     print("Import tables created successfully.")
 
-    csvs = ['raw_albums', 'link_fix_raw_artists', 'link_fix_raw_tracks', 'clean_echonest', 'raw_genres']
+    csvs = ['link_fix_raw_albums', 'link_fix_raw_artists', 'link_fix_raw_tracks', 'clean_echonest', 'raw_genres']
     for csv_file in csvs:
         import_csv_to_db(csv_file)
 
