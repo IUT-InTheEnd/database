@@ -2,3 +2,4 @@ psycopg2-binary
 langcodes
 pandas
 numpy
+bcrypt
