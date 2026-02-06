@@ -220,6 +220,13 @@ def main():
     cursor.execute(query)
     conn.commit()
     print("Import tables deleted.")
+    
+    print("Fix table sequence")
+    with open('sql/fix_sequence.sql', 'r') as file:
+        fix_sequence_commands = file.read()
+    cursor.execute(fix_sequence_commands)
+    conn.commit()
+    print("Table sequence fixed.")
 
     cursor.close()
     conn.close()
