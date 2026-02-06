@@ -95,7 +95,8 @@ CREATE TABLE album (
     album_information TEXT,
     album_tracks INT DEFAULT 0,
     album_producer VARCHAR(510),
-    album_engineer VARCHAR(510)
+    album_engineer VARCHAR(510),
+    album_image_file VARCHAR(512)
 );
 
 CREATE TABLE genre (

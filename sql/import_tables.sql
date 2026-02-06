@@ -66,7 +66,8 @@ SELECT
 	album_information,
 	album_tracks::int,
 	album_producer,
-	album_engineer
+	album_engineer,
+	album_image_file
 FROM
 	import_album;
 
