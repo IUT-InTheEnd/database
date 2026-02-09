@@ -2,7 +2,6 @@ import csv
 import psycopg2
 import psycopg2.extras
 import re
-import link_fix
 from langcodes import *
 from datetime import datetime
 import link_fix
@@ -68,7 +67,7 @@ def import_csv_to_db(csv_file_path):
             table_attributes = ['genre_id, genre_parent_id, genre_title, genre_handle, genre_color, top_level']
         case 'link_fix_raw_albums':
             table_name = ['import_album']
-            table_attributes = ['album_id, album_title, album_date_release, album_date_created, album_listens, album_favorites, album_comments, album_type, album_url, album_handle, album_information, album_tracks, album_producer, album_engineer']
+            table_attributes = ['album_id, album_title, album_date_release, album_date_created, album_listens, album_favorites, album_comments, album_type, album_url, album_handle, album_information, album_tracks, album_producer, album_engineer, album_image_file']
         case _:
             raise ValueError("Unknown CSV file path")
 
@@ -255,7 +254,8 @@ def import_csv_to_db(csv_file_path):
                             album_tracks = row[headers.index('album_tracks')]
                             album_producer = row[headers.index('album_producer')]
                             album_engineer = row[headers.index('album_engineer')]
-                            buffer.append((album_id, album_title, album_date_release, album_date_created, album_listens, album_favorites, album_comments, album_type, album_url, album_handle, album_information, album_tracks, album_producer, album_engineer))
+                            album_image_file = row[headers.index('album_image_file')]
+                            buffer.append((album_id, album_title, album_date_release, album_date_created, album_listens, album_favorites, album_comments, album_type, album_url, album_handle, album_information, album_tracks, album_producer, album_engineer, album_image_file))
                             all_album_ids.append(album_id)
                             if len(buffer) >= BATCH_SIZE:
                                 psycopg2.extras.execute_values(cursor, insert_query, buffer)
