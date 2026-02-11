@@ -9,7 +9,6 @@ DROP TABLE IF EXISTS realiser CASCADE;
 DROP TABLE IF EXISTS track_chanter_en CASCADE;
 DROP TABLE IF EXISTS artiste_chante CASCADE;
 DROP TABLE IF EXISTS user_parle CASCADE;
-DROP TABLE IF EXISTS possede_playlist CASCADE;
 DROP TABLE IF EXISTS playlist_contient_track CASCADE;
 DROP TABLE IF EXISTS playlist CASCADE;
 DROP TABLE IF EXISTS track_echonest CASCADE;
@@ -44,6 +43,7 @@ CREATE TABLE user_profile (
 );
 
 CREATE TABLE "user" (
+    -- Laravel colonnes obligatoires
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -57,6 +57,7 @@ CREATE TABLE "user" (
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     
     -- Colonnes personnalisées
+    user_image_file VARCHAR(512),
     user_age FLOAT,
     user_job VARCHAR(100),
     user_plays_music TEXT,
@@ -192,10 +193,17 @@ CREATE TABLE language (
 );
 
 CREATE TABLE playlist (
+    user_id BIGINT REFERENCES "user"(id),
     playlist_id SERIAL PRIMARY KEY,
     playlist_name VARCHAR(255) NOT NULL,
-    track_id INT,
-    FOREIGN KEY (track_id) REFERENCES track(track_id)
+    playlist_description TEXT,
+    playlist_date_created DATE,
+    playlist_date_updated DATE,
+    playlist_listens INT DEFAULT 0,
+    playlist_favorites INT DEFAULT 0,
+    playlist_public BOOLEAN DEFAULT TRUE,
+    playlist_image_file VARCHAR(512),
+    playlist_deletable BOOLEAN DEFAULT TRUE
 );
 
 -- Relation Tables
@@ -204,12 +212,6 @@ CREATE TABLE playlist_contient_track (
     playlist_id INT REFERENCES playlist(playlist_id),
     track_id INT REFERENCES track(track_id),
     PRIMARY KEY (playlist_id, track_id)
-);
-
-CREATE TABLE possede_playlist (
-    user_id BIGINT REFERENCES "user"(id),
-    playlist_id INT REFERENCES playlist(playlist_id),
-    PRIMARY KEY (user_id, playlist_id)
 );
 
 CREATE TABLE represente (
