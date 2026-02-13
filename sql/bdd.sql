@@ -64,6 +64,7 @@ CREATE TABLE "user" (
     user_gender VARCHAR(100),
     user_instruments TEXT,
     user_music_contexts TEXT,
+    public_profile_visibility BOOLEAN DEFAULT TRUE,
     profile_id INT,
     FOREIGN KEY (profile_id) REFERENCES user_profile(user_profile_id)
 );
