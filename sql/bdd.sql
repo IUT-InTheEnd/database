@@ -285,5 +285,6 @@ CREATE TABLE user_ecoute (
     user_id BIGINT REFERENCES "user"(id),
     track_id INT REFERENCES track(track_id),
     nb_ecoute INT DEFAULT 0,
+    last_listen DATE,
     PRIMARY KEY (user_id, track_id)
 );
