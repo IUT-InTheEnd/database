@@ -122,6 +122,12 @@ def main():
             buffer.clear()
     conn.commit()
     print("User data imported.")
+    
+    # Crée settings privacy
+    cursor.execute("SELECT COUNT(*) FROM \"user\"")
+    nb_user = cursor.fetchone()[0]
+    for i in range(1, nb_user+1):
+        cursor.execute("INSERT INTO user_privacy (id) VALUES (%s)", (i,))
 
     # Import des genres favoris des user
     with open('user_data_clean/user_genres_favoris.csv', 'r') as file:

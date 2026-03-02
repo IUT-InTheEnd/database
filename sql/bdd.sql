@@ -22,6 +22,7 @@ DROP TABLE IF EXISTS "user" CASCADE;
 DROP TABLE IF EXISTS user_profile CASCADE;
 DROP TABLE IF EXISTS artist CASCADE;
 DROP TABLE IF EXISTS language CASCADE;
+DROP TABLE IF EXISTS user_privacy CASCADE;
 
 CREATE TABLE user_profile (
     user_profile_id SERIAL PRIMARY KEY,
@@ -45,7 +46,7 @@ CREATE TABLE user_profile (
 CREATE TABLE "user" (
     -- Laravel colonnes obligatoires
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     email_verified_at TIMESTAMP NULL,
     password VARCHAR(255) NOT NULL,
@@ -64,9 +65,14 @@ CREATE TABLE "user" (
     user_gender VARCHAR(100),
     user_instruments TEXT,
     user_music_contexts TEXT,
-    public_profile_visibility BOOLEAN DEFAULT TRUE,
     profile_id INT,
     FOREIGN KEY (profile_id) REFERENCES user_profile(user_profile_id)
+);
+
+CREATE TABLE user_privacy (
+    id INT,
+    public_profile_visibility BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (id) REFERENCES "user"(id)
 );
 
 -- Recalcule avec trigger moyenne des musiques d'une playlist ou des playlist
