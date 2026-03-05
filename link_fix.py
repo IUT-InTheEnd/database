@@ -23,7 +23,7 @@ if os.path.exists("./dataset/link_fix_raw_tracks.csv") == False:
 if os.path.exists("./dataset/link_fix_raw_artists.csv") == False:
     df2 = pd.read_csv("./dataset/raw_artists.csv", dtype=str)
 
-    mask = df2["artist_id"].astype(str) < '24540'
+    mask = df2["artist_id"].astype(int) < 24540
     df2.loc[mask & df2["artist_image_file"].notna(), "artist_image_file"] = (
         "https://files.freemusicarchive.org/storage-freemusicarchive-org/"
         + df2.loc[mask & df2["artist_image_file"].notna(), "artist_image_file"].str[34:]
@@ -35,7 +35,7 @@ if os.path.exists("./dataset/link_fix_raw_artists.csv") == False:
 if os.path.exists("./dataset/link_fix_raw_albums.csv") == False:
     df3 = pd.read_csv("./dataset/raw_albums.csv", dtype=str)
     
-    mask = df3["album_id"].astype(str) < '23284'
+    mask = df3["album_id"].astype(int) < 23284
     df3.loc[mask & df3["album_image_file"].notna(), "album_image_file"] = (
         "https://files.freemusicarchive.org/storage-freemusicarchive-org/"
         + df3.loc[mask & df3["album_image_file"].notna(), "album_image_file"].str[34:]
