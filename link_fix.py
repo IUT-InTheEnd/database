@@ -23,7 +23,7 @@ if os.path.exists("./dataset/link_fix_raw_tracks.csv") == False:
 if os.path.exists("./dataset/link_fix_raw_artists.csv") == False:
     df2 = pd.read_csv("./dataset/raw_artists.csv", dtype=str)
 
-    mask = df2["artist_id"].astype(str) < '24610'
+    mask = df2["artist_id"].astype(str) < '24540'
     df2.loc[mask & df2["artist_image_file"].notna(), "artist_image_file"] = (
         "https://files.freemusicarchive.org/storage-freemusicarchive-org/"
         + df2.loc[mask & df2["artist_image_file"].notna(), "artist_image_file"].str[34:]
