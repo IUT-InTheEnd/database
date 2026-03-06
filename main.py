@@ -233,6 +233,13 @@ def main():
     cursor.execute(fix_sequence_commands)
     conn.commit()
     print("Table sequence fixed.")
+    
+    print("User & Permission setup")
+    with open('sql/users.sql', 'r') as file:
+        users_commands = file.read()
+    cursor.execute(users_commands)
+    conn.commit()
+    print("Users and permissions set up.")
 
     cursor.close()
     conn.close()
