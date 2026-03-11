@@ -11,3 +11,9 @@ services:
       - ./pgdata:/var/lib/postgresql/data
     ports:
       - "25000:5432"
+  redis:
+    image: redis:trixie
+    container_name: sae5_6_redis
+    ports:
+      - "6379:6379"
+    
