@@ -33,7 +33,8 @@ def main():
     def generate_password_hash(user_id):
         # Hash du mot de passe compatible avec Laravel (bcrypt)
         password = f"password{user_id}"
-        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        # 2y for php
+        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(prefix=b'2y')).decode('utf-8')
 
     def generate_timestamp():
         # Format timestamp compatible PostgreSQL/Laravel
