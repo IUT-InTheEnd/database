@@ -94,7 +94,9 @@ def generate_email(user_id: int) -> str:
 
 def generate_password_hash(user_id: int) -> str:
     password = f"password{user_id}"
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    # Laravel/PHP expects the historical bcrypt $2y$ prefix even though Python emits $2b$.
+    return password_hash.replace("$2b$", "$2y$", 1)
 
 
 def generate_timestamp() -> str:
@@ -269,7 +271,7 @@ def build_user_language_rows(df: pd.DataFrame, language_ids_by_code: dict[str, i
 
 
 def main() -> None:
-    clear_csv_files(USER_DATA_DIR)
+    clear_csv_files(USER_DATA_DIR, keep={"user_pref.csv"})
     df = pd.read_csv("dataset/clean_answers.csv", keep_default_na=False)
 
     if "user_id" not in df.columns:
