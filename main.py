@@ -264,22 +264,41 @@ def import_user_privacy(cursor: psycopg2.extensions.cursor) -> None:
 
 
 def import_user_preferences(cursor: psycopg2.extensions.cursor) -> None:
+    track_relations = load_track_relations()
     with USER_PREF_PATH.open("r", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         track_buffer: list[tuple[int, int]] = []
         artist_buffer: list[tuple[int, int]] = []
         album_buffer: list[tuple[int, int]] = []
         for row in reader:
-            if any(is_missing(row[column]) for column in ("user_id", "track_id", "album_id", "artist_id")):
+            if any(is_missing(row[column]) for column in ("user_id", "track_id")):
                 continue
             user_id = required_int(row["user_id"])
-            track_buffer.append((user_id, required_int(row["track_id"])))
-            artist_buffer.append((user_id, required_int(row["artist_id"])))
-            album_buffer.append((user_id, required_int(row["album_id"])))
+            track_id = required_int(row["track_id"])
+            relation = track_relations.get(track_id)
+            if relation is None:
+                continue
+            artist_id, album_id = relation
+            track_buffer.append((user_id, track_id))
+            artist_buffer.append((user_id, artist_id))
+            album_buffer.append((user_id, album_id))
 
             if len(track_buffer) >= BATCH_SIZE:
                 flush_user_preferences(cursor, track_buffer, artist_buffer, album_buffer)
         flush_user_preferences(cursor, track_buffer, artist_buffer, album_buffer)
+
+
+def load_track_relations() -> dict[int, tuple[int, int]]:
+    track_relations: dict[int, tuple[int, int]] = {}
+    with (PREPARED_DIR / "import_track.csv").open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            track_id = required_int(row["track_id"])
+            track_relations[track_id] = (
+                required_int(row["artist_id"]),
+                required_int(row["album_id"]),
+            )
+    return track_relations
 
 
 def flush_user_preferences(
