@@ -69,9 +69,9 @@ def process_duration(duration_str: str) -> str:
 
 
 def prepare_seed_data() -> None:
-    link_fix.rebuild_link_fixed_datasets()
     clear_csv_files(PREPARED_DIR)
     ensure_directory(PREPARED_DIR)
+    link_fix.rebuild_link_fixed_datasets()
 
     artist_rows, artist_ids = load_artists()
     album_rows, album_ids = load_albums()
@@ -169,7 +169,7 @@ def load_artists() -> tuple[list[dict[str, str]], set[str]]:
     rows: list[dict[str, str]] = []
     artist_ids: set[str] = set()
 
-    with (DATASET_DIR / "link_fix_raw_artists.csv").open("r", encoding="utf-8") as handle:
+    with (PREPARED_DIR / "link_fix_raw_artists.csv").open("r", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         for row in reader:
             artist_id = clean_required_int(row["artist_id"])
@@ -209,7 +209,7 @@ def load_albums() -> tuple[list[dict[str, str]], set[str]]:
     rows: list[dict[str, str]] = []
     album_ids: set[str] = set()
 
-    with (DATASET_DIR / "link_fix_raw_albums.csv").open("r", encoding="utf-8") as handle:
+    with (PREPARED_DIR / "link_fix_raw_albums.csv").open("r", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         for row in reader:
             album_id = clean_required_int(row["album_id"])
@@ -257,7 +257,7 @@ def load_tracks(
     valid_track_ids: set[str] = set()
     artist_listens: dict[str, int] = defaultdict(int)
 
-    with (DATASET_DIR / "link_fix_raw_tracks.csv").open("r", encoding="utf-8") as handle:
+    with (PREPARED_DIR / "link_fix_raw_tracks.csv").open("r", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         for row in reader:
             album_id = clean_required_int(row["album_id"])

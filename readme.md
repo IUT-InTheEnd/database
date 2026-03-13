@@ -24,6 +24,8 @@ Placer les datasets source dans `dataset/` :
 - `clean_answers.csv`
 - `user_pref.csv`
 
+Le dossier `dataset/` est traité comme une entrée en lecture seule. Les artefacts reconstruits par le seeding sont écrits dans `prepared_seed_data/`.
+
 ## Nouveau pipeline
 
 Le seeding est maintenant séparé en deux étapes :

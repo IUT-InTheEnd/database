@@ -4,8 +4,11 @@ from pathlib import Path
 
 import pandas as pd
 
+from pipeline_utils import ensure_directory
+
 
 DATASET_DIR = Path("dataset")
+PREPARED_DIR = Path("prepared_seed_data")
 
 
 def rebuild_link_fixed_datasets() -> None:
@@ -16,7 +19,8 @@ def rebuild_link_fixed_datasets() -> None:
 
 def rebuild_link_fixed_tracks() -> None:
     source = DATASET_DIR / "raw_tracks.csv"
-    target = DATASET_DIR / "link_fix_raw_tracks.csv"
+    target = PREPARED_DIR / "link_fix_raw_tracks.csv"
+    ensure_directory(PREPARED_DIR)
     df = pd.read_csv(source, dtype=str, keep_default_na=False)
 
     track_file_mask = df["track_file"].ne("")
@@ -36,7 +40,8 @@ def rebuild_link_fixed_tracks() -> None:
 
 def rebuild_link_fixed_artists() -> None:
     source = DATASET_DIR / "raw_artists.csv"
-    target = DATASET_DIR / "link_fix_raw_artists.csv"
+    target = PREPARED_DIR / "link_fix_raw_artists.csv"
+    ensure_directory(PREPARED_DIR)
     df = pd.read_csv(source, dtype=str, keep_default_na=False)
 
     artist_ids = pd.to_numeric(df["artist_id"], errors="coerce")
@@ -51,7 +56,8 @@ def rebuild_link_fixed_artists() -> None:
 
 def rebuild_link_fixed_albums() -> None:
     source = DATASET_DIR / "raw_albums.csv"
-    target = DATASET_DIR / "link_fix_raw_albums.csv"
+    target = PREPARED_DIR / "link_fix_raw_albums.csv"
+    ensure_directory(PREPARED_DIR)
     df = pd.read_csv(source, dtype=str, keep_default_na=False)
 
     album_ids = pd.to_numeric(df["album_id"], errors="coerce")
