@@ -1,45 +1,64 @@
+from __future__ import annotations
+
+from pathlib import Path
+
 import pandas as pd
-import os
 
-# fix links raw tracks
-if os.path.exists("./dataset/link_fix_raw_tracks.csv") == False:
-    df1 = pd.read_csv("./dataset/raw_tracks.csv", dtype=str)
 
-    df1.loc[df1["track_file"].notna(), "track_file"] = (
+DATASET_DIR = Path("dataset")
+
+
+def rebuild_link_fixed_datasets() -> None:
+    rebuild_link_fixed_tracks()
+    rebuild_link_fixed_artists()
+    rebuild_link_fixed_albums()
+
+
+def rebuild_link_fixed_tracks() -> None:
+    source = DATASET_DIR / "raw_tracks.csv"
+    target = DATASET_DIR / "link_fix_raw_tracks.csv"
+    df = pd.read_csv(source, dtype=str, keep_default_na=False)
+
+    track_file_mask = df["track_file"].ne("")
+    df.loc[track_file_mask, "track_file"] = (
         "https://files.freemusicarchive.org/storage-freemusicarchive-org/"
-        + df1.loc[df1["track_file"].notna(), "track_file"]
-    )
-    df1.loc[df1["track_file"].isna(), "track_file"] = None
-
-    df1.loc[df1["track_image_file"].notna(), "track_image_file"] = (
-        "https://files.freemusicarchive.org/storage-freemusicarchive-org/"
-        + df1.loc[df1["track_image_file"].notna(), "track_image_file"].str[34:]
-    )
-    df1.loc[df1["track_image_file"].isna(), "track_image_file"] = None
-    
-    df1.to_csv("./dataset/link_fix_raw_tracks.csv",index=False)
-
-# fix links raw artists
-if os.path.exists("./dataset/link_fix_raw_artists.csv") == False:
-    df2 = pd.read_csv("./dataset/raw_artists.csv", dtype=str)
-
-    mask = df2["artist_id"].astype(int) < 24540
-    df2.loc[mask & df2["artist_image_file"].notna(), "artist_image_file"] = (
-        "https://files.freemusicarchive.org/storage-freemusicarchive-org/"
-        + df2.loc[mask & df2["artist_image_file"].notna(), "artist_image_file"].str[34:]
+        + df.loc[track_file_mask, "track_file"]
     )
 
-    df2.to_csv("./dataset/link_fix_raw_artists.csv", index=False)
-
-# fix links raw albums
-if os.path.exists("./dataset/link_fix_raw_albums.csv") == False:
-    df3 = pd.read_csv("./dataset/raw_albums.csv", dtype=str)
-    
-    mask = df3["album_id"].astype(int) < 23284
-    df3.loc[mask & df3["album_image_file"].notna(), "album_image_file"] = (
+    track_image_mask = df["track_image_file"].ne("")
+    df.loc[track_image_mask, "track_image_file"] = (
         "https://files.freemusicarchive.org/storage-freemusicarchive-org/"
-        + df3.loc[mask & df3["album_image_file"].notna(), "album_image_file"].str[34:]
+        + df.loc[track_image_mask, "track_image_file"].str[34:]
     )
-    df3.loc[df3["album_image_file"].isna(), "album_image_file"] = None
-        
-    df3.to_csv("./dataset/link_fix_raw_albums.csv",index=False)
+
+    df.to_csv(target, index=False)
+
+
+def rebuild_link_fixed_artists() -> None:
+    source = DATASET_DIR / "raw_artists.csv"
+    target = DATASET_DIR / "link_fix_raw_artists.csv"
+    df = pd.read_csv(source, dtype=str, keep_default_na=False)
+
+    artist_ids = pd.to_numeric(df["artist_id"], errors="coerce")
+    image_mask = artist_ids.lt(24540) & df["artist_image_file"].ne("")
+    df.loc[image_mask, "artist_image_file"] = (
+        "https://files.freemusicarchive.org/storage-freemusicarchive-org/"
+        + df.loc[image_mask, "artist_image_file"].str[34:]
+    )
+
+    df.to_csv(target, index=False)
+
+
+def rebuild_link_fixed_albums() -> None:
+    source = DATASET_DIR / "raw_albums.csv"
+    target = DATASET_DIR / "link_fix_raw_albums.csv"
+    df = pd.read_csv(source, dtype=str, keep_default_na=False)
+
+    album_ids = pd.to_numeric(df["album_id"], errors="coerce")
+    image_mask = album_ids.lt(23284) & df["album_image_file"].ne("")
+    df.loc[image_mask, "album_image_file"] = (
+        "https://files.freemusicarchive.org/storage-freemusicarchive-org/"
+        + df.loc[image_mask, "album_image_file"].str[34:]
+    )
+
+    df.to_csv(target, index=False)
