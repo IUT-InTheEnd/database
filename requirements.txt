@@ -3,3 +3,4 @@ langcodes
 pandas
 numpy
 bcrypt
+language_data
