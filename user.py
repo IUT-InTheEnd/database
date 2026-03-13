@@ -1,256 +1,276 @@
-import pandas as pd
-import json
+from __future__ import annotations
+
 import ast
-import csv
-import math
-import os
+import json
 from datetime import datetime
+from typing import Any
+
 import bcrypt
+import pandas as pd
 
-def main():
-    df = pd.read_csv("dataset/clean_answers.csv")
+from pipeline_utils import clean_optional_float, clean_text, clear_csv_files, write_csv
 
-    # Suppression des anciens fichiers
-    if not os.path.exists("user_data_clean"):
-        os.makedirs("user_data_clean")
-    else:
-        for filename in os.listdir("user_data_clean"):
-            file_path = os.path.join("user_data_clean", filename)
-            if os.path.isfile(file_path) and filename.lower().endswith(".csv") and not filename.startswith("user_pref"):
-                os.remove(file_path)
 
-    # --- FIX ---
-    # user_id au début du header car absent dans le CSV d'origine
+USER_DATA_DIR = "user_data_clean"
+
+
+def generate_name(user_id: int) -> str:
+    return f"User {user_id}"
+
+
+def generate_email(user_id: int) -> str:
+    return f"user{user_id}@example.com"
+
+
+def generate_password_hash(user_id: int) -> str:
+    password = f"password{user_id}"
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def generate_timestamp() -> str:
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def normalize_binary_choice(value: Any) -> str:
+    text = clean_text(value)
+    if text in {"1", "1.0", "true", "True"}:
+        return "1"
+    if text in {"0", "0.0", "false", "False"}:
+        return "0"
+    return text
+
+
+def parse_list(raw: Any) -> list[str]:
+    value = clean_text(raw)
+    if value == "":
+        return []
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        try:
+            parsed = ast.literal_eval(value)
+        except (ValueError, SyntaxError):
+            parsed = [part.strip() for part in value.split(",") if part.strip()]
+    if isinstance(parsed, list):
+        return [clean_text(item) for item in parsed if clean_text(item) != ""]
+    cleaned = clean_text(parsed)
+    return [cleaned] if cleaned else []
+
+
+def transform_feeling(feeling: str) -> int | None:
+    return {
+        "Calme": 0,
+        "Équilibré(e)": 1,
+        "Plein(e) d'énergie": 2,
+    }.get(feeling)
+
+
+def transform_music_preference(preference: str) -> int | None:
+    return {
+        "L'ambiance musicale": 0,
+        "Les paroles": 1,
+        "Les deux / Sans préférence": 2,
+    }.get(preference)
+
+
+def transform_music_style_preference(style: str) -> int | None:
+    return {
+        "Plutôt acoustique / naturelle": 0,
+        "Plutôt électronique / synthétique": 1,
+        "Les deux / Sans préférence": 2,
+    }.get(style)
+
+
+def transform_current_music_type(music_type: str) -> int:
+    return {
+        "Neutres": 1,
+        "Mélancoliques": 2,
+        "Des morceaux joyeux": 3,
+    }.get(music_type, 0)
+
+
+def transform_usual_listening_mode(mode: str) -> int | None:
+    return {
+        "Seul(e)": 1,
+        "Avec les gens que vous côtoyez (amis, famille, collègues de travail...)": 2,
+    }.get(mode)
+
+
+def transform_genres(genres: list[str]) -> list[int]:
+    genre_map = {
+        "Pop": 10,
+        "Rock": 12,
+        "Hip-Hop": 21,
+        "Soul-RnB": 14,
+        "Électronique": 15,
+        "Classique": 5,
+        "Blues": 3,
+        "Jazz": 4,
+        "Folk": 17,
+        "Country": 9,
+        "Musique expérimentale": 38,
+        "Instrumental": 1235,
+        "Easy Listening (Musique d'ascenseur)": 13,
+        "Old-Time / Historic": 8,
+        "Musique du monde": 2,
+        "Parlé (slam, poésie, podcast...)": 20,
+    }
+    return [genre_map[genre] for genre in genres if genre in genre_map]
+
+
+def transform_languages(languages: list[str]) -> list[int]:
+    language_map = {
+        "Anglais": 1,
+        "Français": 15,
+        "Espagnol": 2,
+        "Allemand": 32,
+        "Italien": 22,
+        "Portugais": 5,
+        "Russe": 43,
+        "Chinois": 25,
+        "Japonais": 20,
+        "Coréen": 34,
+        "Arabe": 9,
+        "Turc": 6,
+        "hindi": 18,
+        "Latin": 46,
+        "Plutôt instrumental": 1235,
+    }
+    return [language_map[language] for language in languages if language in language_map]
+
+
+def build_user_rows(df: pd.DataFrame, timestamp: str) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for _, row in df.iterrows():
+        user_id = int(row["user_id"])
+        rows.append(
+            {
+                "id": user_id,
+                "name": generate_name(user_id),
+                "email": generate_email(user_id),
+                "email_verified_at": timestamp,
+                "password": generate_password_hash(user_id),
+                "remember_token": "",
+                "created_at": timestamp,
+                "updated_at": timestamp,
+                "user_age": clean_optional_float(row["age"]),
+                "user_job": clean_text(row["job_status"]),
+                "user_gender": clean_text(row["gender"]),
+                "user_plays_music": normalize_binary_choice(row["plays_music"]),
+                "user_instruments": clean_text(row["instruments"]),
+                "user_music_contexts": clean_text(row["listening_contexts"]),
+                "profile_id": user_id,
+            }
+        )
+    return rows
+
+
+def build_user_profile_rows(df: pd.DataFrame) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for _, row in df.iterrows():
+        user_id = int(row["user_id"])
+        rows.append(
+            {
+                "user_profile_id": user_id,
+                "music_envy_today": clean_text(row["music_mood_today"]),
+                "feeling": transform_feeling(clean_text(row["current_feeling"])),
+                "music_preference": transform_music_preference(clean_text(row["music_preference"])),
+                "music_style_preference": transform_music_style_preference(clean_text(row["music_style_preference"])),
+                "music_reason": clean_text(row["music_reason"]),
+                "listening_context": clean_text(row["listening_contexts"]),
+                "current_music_type": transform_current_music_type(clean_text(row["current_music_type"])),
+                "usual_listening_mode": transform_usual_listening_mode(clean_text(row["usual_listening_mode"])),
+                "likes_discovery": clean_text(row["likes_discovery"]),
+                "attend_live_concert": clean_text(row["attend_live_concert"]),
+                "repeat_listening": clean_text(row["repeat_listening"]),
+                "explicit_ok": clean_text(row["explicit_ok"]),
+                "avg_song_length": clean_optional_float(row["avg_song_length"]),
+                "avg_daily_listen_time": clean_optional_float(row["avg_daily_listen_time"]),
+                "recommended_artists": clean_text(row["recommended_artists"]),
+            }
+        )
+    return rows
+
+
+def build_user_genres_rows(df: pd.DataFrame) -> list[dict[str, int]]:
+    rows: list[dict[str, int]] = []
+    for _, row in df.iterrows():
+        user_id = int(row["user_id"])
+        for genre_id in transform_genres(parse_list(row["current_genres"])):
+            rows.append({"user_id": user_id, "genre_id": genre_id})
+    return rows
+
+
+def build_user_language_rows(df: pd.DataFrame) -> list[dict[str, int]]:
+    rows: list[dict[str, int]] = []
+    for _, row in df.iterrows():
+        user_id = int(row["user_id"])
+        for language_id in transform_languages(parse_list(row["song_languages"])):
+            rows.append({"user_id": user_id, "language_id": language_id})
+    return rows
+
+
+def main() -> None:
+    clear_csv_files(USER_DATA_DIR, keep={"user_pref.csv"})
+    df = pd.read_csv("dataset/clean_answers.csv", keep_default_na=False)
+
     if "user_id" not in df.columns:
         df.insert(0, "user_id", range(1, len(df) + 1))
 
-    def generate_name(user_id):
-        return f"User {user_id}"
-
-    def generate_email(user_id):
-        return f"user{user_id}@example.com"
-
-    def generate_password_hash(user_id):
-        # Hash du mot de passe compatible avec Laravel (bcrypt)
-        password = f"password{user_id}"
-        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
-    def generate_timestamp():
-        # Format timestamp compatible PostgreSQL/Laravel
-        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # --- MAPPINGS utils pour le système de recommandation ---
-
-    def transform_fealing(feeling): 
-        return {
-            "Calme": 0,
-            "Équilibré(e)": 1,
-            "Plein(e) d'énergie": 2
-        }.get(feeling)
-
-    def transform_music_preference(pref):
-        return {
-            "L'ambiance musicale": 0,
-            "Les paroles": 1,
-            "Les deux / Sans préférence": 2
-        }.get(pref)
-
-    def transform_music_style_preference(style):
-        return {
-            "Plutôt acoustique / naturelle": 0,
-            "Plutôt électronique / synthétique": 1,
-            "Les deux / Sans préférence": 2
-        }.get(style)
-
-    def transform_current_music_type(music_type):
-        return {
-            "Neutres": 1,
-            "Mélancoliques": 2,
-            "Des morceaux joyeux": 3
-        }.get(music_type, 0)
-
-    def transform_usual_listening_mode(mode):
-        return {
-            "Seul(e)": 1,
-            "Avec les gens que vous côtoyez (amis, famille, collègues de travail...)": 2
-        }.get(mode)
-
-    # transformer les genres en IDs
-
-    def transform_genres(genres):
-        genre_map = {
-            "Pop": 10,
-            "Rock": 12,
-            "Hip-Hop": 21,
-            "Soul-RnB": 14,
-            "Électronique": 15,
-            "Classique": 5,
-            "Blues": 3,
-            "Jazz": 4,
-            "Folk": 17,
-            "Country": 9,
-            "Musique expérimentale": 38,
-            "Instrumental": 1235,
-            "Easy Listening (Musique d'ascenseur)": 13,
-            "Old-Time / Historic": 8,
-            "Musique du monde": 2,
-            "Parlé (slam, poésie, podcast...)": 20
-        }
-        return [genre_map[g] for g in genres if g in genre_map]
-
-    # trasnformer les langues en IDs
-
-    def transform_languages(languages):
-        langues_map = {
-            "Anglais": 1,
-            "Français": 15,
-            "Espagnol": 2,
-            "Allemand": 32,
-            "Italien": 22,
-            "Portugais": 5,
-            "Russe": 43,
-            "Chinois": 25,
-            "Japonais": 20,
-            "Coréen": 34,
-            "Arabe": 9,
-            "Turc": 6,
-            "hindi": 18,
-            "Latin": 46
-        }
-        return [langues_map[l] for l in languages if l in langues_map]
-
-
-    # ---------------------------------------------------------
-    # TABLE USER (compatible Laravel)
-    # ---------------------------------------------------------
-
-    user_rows = [] # liste pour la création du CSV
-    current_timestamp = generate_timestamp()
-
-    for _, row in df.iterrows(): #_ pour ignorer l'index obligatoire pour le iterrows
-        user_rows.append({
-            "id": row["user_id"],
-            "name": generate_name(row["user_id"]),
-            "email": generate_email(row["user_id"]),
-            "email_verified_at": current_timestamp,
-            "password": generate_password_hash(row["user_id"]),
-            "remember_token": None,
-            "created_at": current_timestamp,
-            "updated_at": current_timestamp,
-            "user_age": row["age"],
-            "user_job": row["job_status"],
-            "user_gender": row["gender"],
-            "user_plays_music": row["plays_music"],
-            "user_instruments": row["instruments"],
-            "user_music_contexts": row["listening_contexts"],
-            "profile_id": row["user_id"]
-        })
-
-    # création du CSV
-    with open("./user_data_clean/user.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=user_rows[0].keys())
-        writer.writeheader()
-        writer.writerows(user_rows) # ecriture des lignes de user_rows
-    print("succès de la création de user.csv")
-
-
-    # ---------------------------------------------------------
-    # TABLE USER PROFILE
-    # ---------------------------------------------------------
-
-    user_profile_rows = []
-
-    for _, row in df.iterrows():
-        user_profile_rows.append({
-            "user_profile_id": row["user_id"],
-            "music_envy_today": row["music_mood_today"],
-            "feeling": transform_fealing(row["current_feeling"]),
-            "music_preference": transform_music_preference(row["music_preference"]),
-            "music_style_preference": transform_music_style_preference(row["music_style_preference"]),
-            "music_reason": row["music_reason"],
-            "listening_context": row["listening_contexts"],
-            "current_music_type": transform_current_music_type(row["current_music_type"]),
-            "usual_listening_mode": transform_usual_listening_mode(row["usual_listening_mode"]),
-            "likes_discovery": row["likes_discovery"],
-            "attend_live_concert": row["attend_live_concert"],
-            "repeat_listening": row["repeat_listening"],
-            "explicit_ok": row["explicit_ok"],
-            "avg_song_length": row["avg_song_length"],
-            "avg_daily_listen_time": row["avg_daily_listen_time"],
-            "recommended_artists": row["recommended_artists"]
-        })
-
-    with open("./user_data_clean/user_profile.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=user_profile_rows[0].keys())
-        writer.writeheader()
-        writer.writerows(user_profile_rows)
-    print("succès de la création de user_profile.csv")
-
-
-    # ---------------------------------------------------------
-    # TABLE AJOUTE GENRE FAVORIS
-    # ---------------------------------------------------------
-
-    genre_rows = []
-
-    for _, row in df.iterrows():
-        user_id = row["user_id"]
-        genres = row["current_genres"]
-
-        # problème de formatage des différentes lignes de current_genres
-        try:
-            genres_list = json.loads(genres)        # loads en json : '["Rock", "Pop"]' 
-        except:
-            try:
-                genres_list = ast.literal_eval(genres)  # ex: "['Rock', 'Pop']"
-            except:
-                genres_list = [g.strip() for g in genres.split(",")]  # ex: "Rock, Pop"
-
-        # espérer que c'est une liste
-        if not isinstance(genres_list, list):
-            genres_list = [genres_list]
-
-        # transformation en ID
-        genre_ids = transform_genres(genres_list)
-
-        for gid in genre_ids:
-            genre_rows.append({"user_id": user_id, "genre_id": gid})
-
-    with open("./user_data_clean/user_genres_favoris.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["user_id", "genre_id"])
-        writer.writeheader()
-        writer.writerows(genre_rows)
-    print("succès de la création de user_genres_favoris.csv")
-
-
-    # ---------------------------------------------------------
-    # TABLE PARLE
-    # ---------------------------------------------------------
-
-    language_rows = []
-
-    for _, row in df.iterrows():
-        user_id = row["user_id"]
-        raw = row["song_languages"]
-
-        # pareil que pour les genres
-        if raw is None or (isinstance(raw, float) and math.isnan(raw)):
-            continue
-        try:
-            languages = json.loads(raw)
-        except:
-            languages = ast.literal_eval(raw)
-
-        languages_ids = transform_languages(languages)
-
-        for lid in languages_ids:
-            language_rows.append({"user_id": user_id, "language_id": lid})
-
-    with open("./user_data_clean/parle.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["user_id", "language_id"])
-        writer.writeheader()
-        writer.writerows(language_rows)
-    print("succès de la création de parle.csv")
+    timestamp = generate_timestamp()
+    write_csv(
+        f"{USER_DATA_DIR}/user.csv",
+        [
+            "id",
+            "name",
+            "email",
+            "email_verified_at",
+            "password",
+            "remember_token",
+            "created_at",
+            "updated_at",
+            "user_age",
+            "user_job",
+            "user_gender",
+            "user_plays_music",
+            "user_instruments",
+            "user_music_contexts",
+            "profile_id",
+        ],
+        build_user_rows(df, timestamp),
+    )
+    write_csv(
+        f"{USER_DATA_DIR}/user_profile.csv",
+        [
+            "user_profile_id",
+            "music_envy_today",
+            "feeling",
+            "music_preference",
+            "music_style_preference",
+            "music_reason",
+            "listening_context",
+            "current_music_type",
+            "usual_listening_mode",
+            "likes_discovery",
+            "attend_live_concert",
+            "repeat_listening",
+            "explicit_ok",
+            "avg_song_length",
+            "avg_daily_listen_time",
+            "recommended_artists",
+        ],
+        build_user_profile_rows(df),
+    )
+    write_csv(
+        f"{USER_DATA_DIR}/user_genres_favoris.csv",
+        ["user_id", "genre_id"],
+        build_user_genres_rows(df),
+    )
+    write_csv(
+        f"{USER_DATA_DIR}/parle.csv",
+        ["user_id", "language_id"],
+        build_user_language_rows(df),
+    )
 
 
 if __name__ == "__main__":

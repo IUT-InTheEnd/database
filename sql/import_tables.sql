@@ -13,16 +13,9 @@ SELECT
 		WHEN artist_longitude = '' THEN NULL
 		ELSE artist_longitude::float
 	END AS artist_longitude,
-	artist_favorites::int,
-	artist_comments::int,
-	(
-		SELECT
-			sum(track_listens::int)
-		FROM
-			import_track it
-		WHERE
-			it.artist_id = ia.artist_id
-	) AS artist_listens,
+	COALESCE(NULLIF(artist_favorites, ''), '0')::int,
+	COALESCE(NULLIF(artist_comments, ''), '0')::int,
+	COALESCE(NULLIF(artist_listens, ''), '0')::int AS artist_listens,
 	CASE
 		WHEN artist_active_year_begin = '' THEN NULL
 		ELSE artist_active_year_begin::int
@@ -46,7 +39,7 @@ SELECT
 	TO_DATE(artist_date_created, 'DD-MM-YYYY') AS artist_date_created,
 	artist_image_file
 FROM
-	import_artist ia;
+	import_artist;
 
 
 INSERT
@@ -57,14 +50,14 @@ SELECT
 	album_title,
 	TO_DATE(album_date_release, 'DD-MM-YYYY') AS album_date_release,
 	TO_DATE(album_date_created, 'DD-MM-YYYY') AS album_date_created,
-	album_listens::int,
-	album_favorites::int,
-	album_comments::int,
+	COALESCE(NULLIF(album_listens, ''), '0')::int,
+	COALESCE(NULLIF(album_favorites, ''), '0')::int,
+	COALESCE(NULLIF(album_comments, ''), '0')::int,
 	album_type,
 	album_url,
 	album_handle,
 	album_information,
-	album_tracks::int,
+	COALESCE(NULLIF(album_tracks, ''), '0')::int,
 	album_producer,
 	album_engineer,
 	album_image_file
@@ -87,16 +80,16 @@ INSERT
 SELECT
 	track_id::int,
 	track_title,
-	track_duration::int,
+	COALESCE(NULLIF(track_duration, ''), '0')::int,
 	to_date(track_date_created, 'DD-MM-YYYY') AS track_date_created,
 	to_date(track_date_recorded, 'DD-MM-YYYY') AS track_date_recorded,
 	track_composer,
 	track_lyricist,
 	track_publisher,
-	track_listens::int,
-	track_favorites::int,
-	track_comments::int,
-	track_interest::int,
+	COALESCE(NULLIF(track_listens, ''), '0')::int,
+	COALESCE(NULLIF(track_favorites, ''), '0')::int,
+	COALESCE(NULLIF(track_comments, ''), '0')::int,
+	COALESCE(NULLIF(track_interest, ''), '0')::int,
 	track_copyright_c,
 	track_copyright_p,
 	CASE
@@ -104,7 +97,7 @@ SELECT
 		ELSE TRUE
 	END AS track_explicit,
 	track_explicit_note,
-	track_instrumental::bool,
+	COALESCE(NULLIF(track_instrumental, ''), '0')::bool,
 	track_language_code,
 	track_url,
 	track_file,
@@ -154,19 +147,19 @@ INSERT
 	track_echonest
 SELECT
 	track_id::int,
-	acousticness::float,
-	energy::float,
-	instrumentalness::float,
-	liveness::float,
-	speechiness::float,
-	valence::float,
-	danceability::float,
-	tempo::float,
-	artist_discovery::float,
-	artist_hottness::float,
-	artist_familiarity::float,
-	track_hottness::float,
-	track_currency::float
+	NULLIF(acousticness, '')::float,
+	NULLIF(energy, '')::float,
+	NULLIF(instrumentalness, '')::float,
+	NULLIF(liveness, '')::float,
+	NULLIF(speechiness, '')::float,
+	NULLIF(valence, '')::float,
+	NULLIF(danceability, '')::float,
+	NULLIF(tempo, '')::float,
+	NULLIF(artist_discovery, '')::float,
+	NULLIF(artist_hottness, '')::float,
+	NULLIF(artist_familiarity, '')::float,
+	NULLIF(track_hottness, '')::float,
+	NULLIF(track_currency, '')::float
 FROM
 	import_echonest;
 
