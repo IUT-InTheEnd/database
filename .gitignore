@@ -220,8 +220,6 @@ ipython_config.py
 __pypackages__/
 prepared_seed_data/*.csv
 prepared_seed_data/user/*.csv
-!prepared_seed_data/user/
-!prepared_seed_data/user/user_pref.csv
 user_data_clean/
 pgdata/
 

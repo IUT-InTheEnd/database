@@ -15,6 +15,7 @@ from pipeline_utils import clean_text, is_missing
 
 PREPARED_DIR = Path("prepared_seed_data")
 USER_DATA_DIR = PREPARED_DIR / "user"
+USER_PREF_PATH = Path("dataset/user_pref.csv")
 BATCH_SIZE = 1000
 
 
@@ -76,7 +77,7 @@ def require_prepared_files() -> None:
         USER_DATA_DIR / "user_profile.csv",
         USER_DATA_DIR / "user_genres_favoris.csv",
         USER_DATA_DIR / "parle.csv",
-        USER_DATA_DIR / "user_pref.csv",
+        USER_PREF_PATH,
     ]
     missing_files = [str(path) for path in required_files if not path.exists()]
     if missing_files:
@@ -263,7 +264,7 @@ def import_user_privacy(cursor: psycopg2.extensions.cursor) -> None:
 
 
 def import_user_preferences(cursor: psycopg2.extensions.cursor) -> None:
-    with (USER_DATA_DIR / "user_pref.csv").open("r", encoding="utf-8") as handle:
+    with USER_PREF_PATH.open("r", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         track_buffer: list[tuple[int, int]] = []
         artist_buffer: list[tuple[int, int]] = []

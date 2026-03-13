@@ -269,7 +269,7 @@ def build_user_language_rows(df: pd.DataFrame, language_ids_by_code: dict[str, i
 
 
 def main() -> None:
-    clear_csv_files(USER_DATA_DIR, keep={"user_pref.csv"})
+    clear_csv_files(USER_DATA_DIR)
     df = pd.read_csv("dataset/clean_answers.csv", keep_default_na=False)
 
     if "user_id" not in df.columns:

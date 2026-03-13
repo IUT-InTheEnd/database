@@ -22,13 +22,14 @@ Placer les datasets source dans `dataset/` :
 - `raw_genres.csv`
 - `clean_echonest.csv`
 - `clean_answers.csv`
+- `user_pref.csv`
 
 ## Nouveau pipeline
 
 Le seeding est maintenant séparé en deux étapes :
 
 1. `source -> CSV préparés`
-   Produit des artefacts réutilisables dans `prepared_seed_data/`, y compris `prepared_seed_data/user/` pour les données utilisateur.
+   Produit des artefacts réutilisables dans `prepared_seed_data/`, y compris `prepared_seed_data/user/` pour les CSV utilisateurs reconstruits.
 2. `CSV préparés -> base de données`
    Charge uniquement les artefacts déjà préparés dans PostgreSQL.
 
@@ -55,6 +56,6 @@ Si les fichiers préparés n'existent pas encore, `main.py` demande d'exécuter 
 - `prepare_seed_data.py` reconstruit les CSV préparés pour les tables d'import.
 - `user.py` reconstruit les CSV utilisateurs nettoyés dans `prepared_seed_data/user/`.
 - `peuplement.py` reste disponible comme alias vers `prepare_seed_data.py`.
-- `prepared_seed_data/user/user_pref.csv` est un artefact préparé statique utilisé pour seed les favoris utilisateurs. Il n'est pas reconstruit depuis `clean_answers.csv`.
+- `dataset/user_pref.csv` est un dataset d'entrée utilisé pour seed les favoris utilisateurs. Il n'est pas reconstruit depuis `clean_answers.csv`.
 - `artist_listens` est désormais pré-calculé pendant la préparation des CSV, ce qui évite la sous-requête coûteuse dans `sql/import_tables.sql`.
 - Les valeurs manquantes et `NaN` sont nettoyées avant l'écriture des CSV préparés pour éviter leur insertion en base.
