@@ -15,6 +15,73 @@ from pipeline_utils import clean_optional_float, clean_text, clear_csv_files, wr
 
 USER_DATA_DIR = "user_data_clean"
 PREPARED_LANGUAGE_PATH = Path("prepared_seed_data/import_language.csv")
+PREPARED_GENRE_PATH = Path("prepared_seed_data/import_genre.csv")
+
+FEELING_MAP = {
+    "Calme": 0,
+    "Équilibré(e)": 1,
+    "Plein(e) d'énergie": 2,
+}
+
+MUSIC_PREFERENCE_MAP = {
+    "L'ambiance musicale": 0,
+    "Les paroles": 1,
+    "Les deux / Sans préférence": 2,
+}
+
+MUSIC_STYLE_PREFERENCE_MAP = {
+    "Plutôt acoustique / naturelle": 0,
+    "Plutôt électronique / synthétique": 1,
+    "Les deux / Sans préférence": 2,
+}
+
+CURRENT_MUSIC_TYPE_MAP = {
+    "Neutres": 1,
+    "Mélancoliques": 2,
+    "Des morceaux joyeux": 3,
+}
+
+USUAL_LISTENING_MODE_MAP = {
+    "Seul(e)": 1,
+    "Avec les gens que vous côtoyez (amis, famille, collègues de travail...)": 2,
+}
+
+SURVEY_GENRE_TITLES = {
+    "Pop": "Pop",
+    "Rock": "Rock",
+    "Hip-Hop": "Hip-Hop",
+    "Soul-RnB": "Soul-RnB",
+    "Électronique": "Electronic",
+    "Classique": "Classical",
+    "Blues": "Blues",
+    "Jazz": "Jazz",
+    "Folk": "Folk",
+    "Country": "Country",
+    "Musique expérimentale": "Experimental",
+    "Instrumental": "Instrumental",
+    "Easy Listening (Musique d'ascenseur)": "Easy Listening",
+    "Old-Time / Historic": "Old-Time / Historic",
+    "Musique du monde": "International",
+    "Parlé (slam, poésie, podcast...)": "Spoken",
+}
+
+SURVEY_LANGUAGE_CODES = {
+    "Anglais": "en",
+    "Français": "fr",
+    "Espagnol": "es",
+    "Allemand": "de",
+    "Italien": "it",
+    "Portugais": "pt",
+    "Russe": "ru",
+    "Chinois": "zh",
+    "Japonais": "ja",
+    "Coréen": "ko",
+    "Arabe": "ar",
+    "Turc": "tr",
+    "hindi": "hi",
+    "Latin": "la",
+    "Plutôt instrumental": "",
+}
 
 
 def generate_name(user_id: int) -> str:
@@ -61,64 +128,48 @@ def parse_list(raw: Any) -> list[str]:
 
 
 def transform_feeling(feeling: str) -> int | None:
-    return {
-        "Calme": 0,
-        "Équilibré(e)": 1,
-        "Plein(e) d'énergie": 2,
-    }.get(feeling)
+    return FEELING_MAP.get(feeling)
 
 
 def transform_music_preference(preference: str) -> int | None:
-    return {
-        "L'ambiance musicale": 0,
-        "Les paroles": 1,
-        "Les deux / Sans préférence": 2,
-    }.get(preference)
+    return MUSIC_PREFERENCE_MAP.get(preference)
 
 
 def transform_music_style_preference(style: str) -> int | None:
-    return {
-        "Plutôt acoustique / naturelle": 0,
-        "Plutôt électronique / synthétique": 1,
-        "Les deux / Sans préférence": 2,
-    }.get(style)
+    return MUSIC_STYLE_PREFERENCE_MAP.get(style)
 
 
 def transform_current_music_type(music_type: str) -> int:
-    return {
-        "Neutres": 1,
-        "Mélancoliques": 2,
-        "Des morceaux joyeux": 3,
-    }.get(music_type, 0)
+    return CURRENT_MUSIC_TYPE_MAP.get(music_type, 0)
 
 
 def transform_usual_listening_mode(mode: str) -> int | None:
-    return {
-        "Seul(e)": 1,
-        "Avec les gens que vous côtoyez (amis, famille, collègues de travail...)": 2,
-    }.get(mode)
+    return USUAL_LISTENING_MODE_MAP.get(mode)
 
 
-def transform_genres(genres: list[str]) -> list[int]:
-    genre_map = {
-        "Pop": 10,
-        "Rock": 12,
-        "Hip-Hop": 21,
-        "Soul-RnB": 14,
-        "Électronique": 15,
-        "Classique": 5,
-        "Blues": 3,
-        "Jazz": 4,
-        "Folk": 17,
-        "Country": 9,
-        "Musique expérimentale": 38,
-        "Instrumental": 1235,
-        "Easy Listening (Musique d'ascenseur)": 13,
-        "Old-Time / Historic": 8,
-        "Musique du monde": 2,
-        "Parlé (slam, poésie, podcast...)": 20,
-    }
-    return [genre_map[genre] for genre in genres if genre in genre_map]
+def load_genre_ids_by_title() -> dict[str, int]:
+    if not PREPARED_GENRE_PATH.exists():
+        raise FileNotFoundError(
+            "Missing prepared genre data. Run `python3 prepare_seed_data.py` or `python3 main.py --rebuild` first."
+        )
+
+    genre_ids_by_title: dict[str, int] = {}
+    with PREPARED_GENRE_PATH.open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            title = clean_text(row["genre_title"])
+            if title != "":
+                genre_ids_by_title[title] = int(row["genre_id"])
+    return genre_ids_by_title
+
+
+def transform_genres(genres: list[str], genre_ids_by_title: dict[str, int]) -> list[int]:
+    genre_ids: list[int] = []
+    for genre in genres:
+        genre_title = SURVEY_GENRE_TITLES.get(genre, "")
+        if genre_title and genre_title in genre_ids_by_title:
+            genre_ids.append(genre_ids_by_title[genre_title])
+    return genre_ids
 
 
 def load_language_ids_by_code() -> dict[str, int]:
@@ -138,26 +189,9 @@ def load_language_ids_by_code() -> dict[str, int]:
 
 
 def transform_languages(languages: list[str], language_ids_by_code: dict[str, int]) -> list[int]:
-    survey_language_codes = {
-        "Anglais": "en",
-        "Français": "fr",
-        "Espagnol": "es",
-        "Allemand": "de",
-        "Italien": "it",
-        "Portugais": "pt",
-        "Russe": "ru",
-        "Chinois": "zh",
-        "Japonais": "ja",
-        "Coréen": "ko",
-        "Arabe": "ar",
-        "Turc": "tr",
-        "hindi": "hi",
-        "Latin": "la",
-        "Plutôt instrumental": "",
-    }
     language_ids: list[int] = []
     for language in languages:
-        language_code = survey_language_codes.get(language, "")
+        language_code = SURVEY_LANGUAGE_CODES.get(language, "")
         if language_code and language_code in language_ids_by_code:
             language_ids.append(language_ids_by_code[language_code])
     return language_ids
@@ -216,11 +250,11 @@ def build_user_profile_rows(df: pd.DataFrame) -> list[dict[str, Any]]:
     return rows
 
 
-def build_user_genres_rows(df: pd.DataFrame) -> list[dict[str, int]]:
+def build_user_genres_rows(df: pd.DataFrame, genre_ids_by_title: dict[str, int]) -> list[dict[str, int]]:
     rows: list[dict[str, int]] = []
     for _, row in df.iterrows():
         user_id = int(row["user_id"])
-        for genre_id in transform_genres(parse_list(row["current_genres"])):
+        for genre_id in transform_genres(parse_list(row["current_genres"]), genre_ids_by_title):
             rows.append({"user_id": user_id, "genre_id": genre_id})
     return rows
 
@@ -241,6 +275,7 @@ def main() -> None:
     if "user_id" not in df.columns:
         df.insert(0, "user_id", range(1, len(df) + 1))
 
+    genre_ids_by_title = load_genre_ids_by_title()
     language_ids_by_code = load_language_ids_by_code()
     timestamp = generate_timestamp()
     write_csv(
@@ -289,7 +324,7 @@ def main() -> None:
     write_csv(
         f"{USER_DATA_DIR}/user_genres_favoris.csv",
         ["user_id", "genre_id"],
-        build_user_genres_rows(df),
+        build_user_genres_rows(df, genre_ids_by_title),
     )
     write_csv(
         f"{USER_DATA_DIR}/parle.csv",
