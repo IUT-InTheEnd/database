@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import ast
+import csv
 import json
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import bcrypt
@@ -12,6 +14,7 @@ from pipeline_utils import clean_optional_float, clean_text, clear_csv_files, wr
 
 
 USER_DATA_DIR = "user_data_clean"
+PREPARED_LANGUAGE_PATH = Path("prepared_seed_data/import_language.csv")
 
 
 def generate_name(user_id: int) -> str:
@@ -118,24 +121,46 @@ def transform_genres(genres: list[str]) -> list[int]:
     return [genre_map[genre] for genre in genres if genre in genre_map]
 
 
-def transform_languages(languages: list[str]) -> list[int]:
-    language_map = {
-        "Anglais": 1,
-        "Français": 15,
-        "Espagnol": 2,
-        "Allemand": 32,
-        "Italien": 22,
-        "Portugais": 5,
-        "Russe": 43,
-        "Chinois": 25,
-        "Japonais": 20,
-        "Coréen": 34,
-        "Arabe": 9,
-        "Turc": 6,
-        "hindi": 18,
-        "Latin": 46,
+def load_language_ids_by_code() -> dict[str, int]:
+    if not PREPARED_LANGUAGE_PATH.exists():
+        raise FileNotFoundError(
+            "Missing prepared language data. Run `python3 prepare_seed_data.py` or `python3 main.py --rebuild` first."
+        )
+
+    language_ids_by_code: dict[str, int] = {}
+    with PREPARED_LANGUAGE_PATH.open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            code = clean_text(row["language_code"])
+            if code != "":
+                language_ids_by_code[code] = int(row["language_id"])
+    return language_ids_by_code
+
+
+def transform_languages(languages: list[str], language_ids_by_code: dict[str, int]) -> list[int]:
+    survey_language_codes = {
+        "Anglais": "en",
+        "Français": "fr",
+        "Espagnol": "es",
+        "Allemand": "de",
+        "Italien": "it",
+        "Portugais": "pt",
+        "Russe": "ru",
+        "Chinois": "zh",
+        "Japonais": "ja",
+        "Coréen": "ko",
+        "Arabe": "ar",
+        "Turc": "tr",
+        "hindi": "hi",
+        "Latin": "la",
+        "Plutôt instrumental": "",
     }
-    return [language_map[language] for language in languages if language in language_map]
+    language_ids: list[int] = []
+    for language in languages:
+        language_code = survey_language_codes.get(language, "")
+        if language_code and language_code in language_ids_by_code:
+            language_ids.append(language_ids_by_code[language_code])
+    return language_ids
 
 
 def build_user_rows(df: pd.DataFrame, timestamp: str) -> list[dict[str, Any]]:
@@ -200,11 +225,11 @@ def build_user_genres_rows(df: pd.DataFrame) -> list[dict[str, int]]:
     return rows
 
 
-def build_user_language_rows(df: pd.DataFrame) -> list[dict[str, int]]:
+def build_user_language_rows(df: pd.DataFrame, language_ids_by_code: dict[str, int]) -> list[dict[str, int]]:
     rows: list[dict[str, int]] = []
     for _, row in df.iterrows():
         user_id = int(row["user_id"])
-        for language_id in transform_languages(parse_list(row["song_languages"])):
+        for language_id in transform_languages(parse_list(row["song_languages"]), language_ids_by_code):
             rows.append({"user_id": user_id, "language_id": language_id})
     return rows
 
@@ -216,6 +241,7 @@ def main() -> None:
     if "user_id" not in df.columns:
         df.insert(0, "user_id", range(1, len(df) + 1))
 
+    language_ids_by_code = load_language_ids_by_code()
     timestamp = generate_timestamp()
     write_csv(
         f"{USER_DATA_DIR}/user.csv",
@@ -268,7 +294,7 @@ def main() -> None:
     write_csv(
         f"{USER_DATA_DIR}/parle.csv",
         ["user_id", "language_id"],
-        build_user_language_rows(df),
+        build_user_language_rows(df, language_ids_by_code),
     )
 
 
