@@ -8,20 +8,47 @@ from pathlib import Path
 from typing import Any
 
 import bcrypt
-import pandas as pd
 
-from pipeline_utils import clean_optional_float, clean_text, clear_csv_files, write_csv
+def main():
+    df = pd.read_csv("dataset/clean_answers.csv")
 
+    # Suppression des anciens fichiers
+    if not os.path.exists("user_data_clean"):
+        os.makedirs("user_data_clean")
+    else:
+        for filename in os.listdir("user_data_clean"):
+            file_path = os.path.join("user_data_clean", filename)
+            if os.path.isfile(file_path) and filename.lower().endswith(".csv") and not filename.startswith("user_pref"):
+                os.remove(file_path)
 
-USER_DATA_DIR = "prepared_seed_data/user"
-PREPARED_LANGUAGE_PATH = Path("prepared_seed_data/import_language.csv")
-PREPARED_GENRE_PATH = Path("prepared_seed_data/import_genre.csv")
+    # --- FIX ---
+    # user_id au début du header car absent dans le CSV d'origine
+    if "user_id" not in df.columns:
+        df.insert(0, "user_id", range(1, len(df) + 1))
 
-FEELING_MAP = {
-    "Calme": 0,
-    "Équilibré(e)": 1,
-    "Plein(e) d'énergie": 2,
-}
+    def generate_name(user_id):
+        return f"User {user_id}"
+
+    def generate_email(user_id):
+        return f"user{user_id}@example.com"
+
+    def generate_password_hash(user_id):
+        # Hash du mot de passe compatible avec Laravel (bcrypt)
+        password = f"password{user_id}"
+        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    def generate_timestamp():
+        # Format timestamp compatible PostgreSQL/Laravel
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # --- MAPPINGS utils pour le système de recommandation ---
+
+    def transform_fealing(feeling): 
+        return {
+            "Calme": 0,
+            "Équilibré(e)": 1,
+            "Plein(e) d'énergie": 2
+        }.get(feeling)
 
 MUSIC_PREFERENCE_MAP = {
     "L'ambiance musicale": 0,

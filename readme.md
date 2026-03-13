@@ -1,63 +1,53 @@
-# Utilisation
+# utilisation
 
-## Pré-requis
+Si vous ne souhaitez pas utiliser git lfs, suivez les instructions "Sinon" plus bas.
+Installer git lfs pour obtenir les datasets complets depuis le repo.
+ce repo utilise [git lfs](https://git-lfs.com/) pour stocker les csv,
+pour cloner le repo utilisez :  
+`git clone https://github.com/IUT-InTheEnd/analyse.git`  
+et pour cloner les csv complets utilisez :  
+`git lfs checkout`  
 
-Installer les dépendances Python :
-
-```bash
-pip install -r requirements.txt
+## Sinon
+Cloner le repo :
+```
+git clone https://github.com/IUT-InTheEnd/database.git
 ```
 
-Démarrer PostgreSQL avec Docker :
+Récupérer le clean_echonest venant de la partie analyse du repo :
+En clonant le repo  :
+```
+git clone https://github.com/IUT-InTheEnd/analyse.git
+```
+Puis lancer main.py dans le dossier analyse.
+Et récupérer le dataset clean_echonest.csv dans le dossier cleaned_dataset le mettre dans le dossier dataset de ce repo.
 
-```bash
+Récupérer les autres datasets depuis le Teams qui sont :
+raw_genres.csv
+raw_albums.csv
+rtaw_artists.csv
+raw_tracks.csv
+
+Récupérer aussi le dataset clean_answers.csv depuis :
+https://github.com/IUT-InTheEnd/analyse-questions/tree/main/src/analyse_questions/cleanup/out
+
+**TOUT LES DATASETS DOIVENT ETRE PLACES DANS LE DOSSIER dataset**
+
+
+**Il y a un bouton dans l'interface pour installer les dépendances.**
+**Attention** : si les dépendances ne s'installent pas, il faut les installer manuellement avec pip ou crée un environnement. Un fichier requirements.txt est fourni.
+
+Lancer le docker avec la commande :
+```
 docker compose up
 ```
 
-Placer les datasets source dans `dataset/` :
-
-- `raw_albums.csv`
-- `raw_artists.csv`
-- `raw_tracks.csv`
-- `raw_genres.csv`
-- `clean_echonest.csv`
-- `clean_answers.csv`
-- `user_pref.csv`
-
-Le dossier `dataset/` est traité comme une entrée en lecture seule. Les artefacts reconstruits par le seeding sont écrits dans `prepared_seed_data/`.
-
-## Nouveau pipeline
-
-Le seeding est maintenant séparé en deux étapes :
-
-1. `source -> CSV préparés`
-   Produit des artefacts réutilisables dans `prepared_seed_data/`, y compris `prepared_seed_data/user/` pour les CSV utilisateurs reconstruits.
-2. `CSV préparés -> base de données`
-   Charge uniquement les artefacts déjà préparés dans PostgreSQL.
-
-Cette séparation permet de reseed rapidement la base quand les datasets source n'ont pas changé.
-
-## Commandes
-
-Rebuild complet des artefacts puis import base :
-
-```bash
-python3 main.py --rebuild
+Une fois lancer, lancer le script main.py depuis la root du projet tel que :
 ```
-
-Import rapide à partir des CSV déjà préparés :
-
-```bash
 python3 main.py
 ```
 
-Si les fichiers préparés n'existent pas encore, `main.py` demande d'exécuter `--rebuild` d'abord.
+Une fois que le script a terminé vous pouvez accéder à la base de donnée via votre client préféré.
 
-## Détails
 
-- `prepare_seed_data.py` reconstruit les CSV préparés pour les tables d'import.
-- `user.py` reconstruit les CSV utilisateurs nettoyés dans `prepared_seed_data/user/`.
-- `peuplement.py` reste disponible comme alias vers `prepare_seed_data.py`.
-- `dataset/user_pref.csv` est un dataset d'entrée utilisé pour seed les favoris utilisateurs. Il n'est pas reconstruit depuis `clean_answers.csv`.
-- `artist_listens` est désormais pré-calculé pendant la préparation des CSV, ce qui évite la sous-requête coûteuse dans `sql/import_tables.sql`.
-- Les valeurs manquantes et `NaN` sont nettoyées avant l'écriture des CSV préparés pour éviter leur insertion en base.
+
