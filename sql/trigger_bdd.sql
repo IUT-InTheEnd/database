@@ -1,8 +1,3 @@
-DROP TRIGGER IF EXISTS trg_calc_echonest_favoris ON ajoute_favori;
-DROP FUNCTION IF EXISTS calc_echonest_favoris();
-DROP TRIGGER IF EXISTS trg_calc_listens ON user_ecoute;
-DROP FUNCTION IF EXISTS incr_listens();
-
 -- permet l'obtention d'une distribution gaussienne
 CREATE OR REPLACE 
 FUNCTION gauss(max integer)
