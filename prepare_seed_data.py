@@ -26,6 +26,11 @@ TRACK_GENRE_PATTERN = re.compile(r"'genre_id': '(\d+)'")
 UNKNOWN_LICENSE_TITLE = "Unknown license"
 
 
+def required_title(value: str, fallback: str) -> str:
+    title = clean_text(value)
+    return title or fallback
+
+
 def process_language_code(code: str) -> str:
     language_code = clean_text(code)
     if language_code == "":
@@ -294,7 +299,7 @@ def load_tracks(
             track_rows.append(
                 {
                     "track_id": track_id,
-                    "track_title": clean_text(row["track_title"]),
+                    "track_title": required_title(row["track_title"], f"Untitled track {track_id}"),
                     "track_duration": process_duration(row["track_duration"]),
                     "track_date_created": process_date(row["track_date_created"]),
                     "track_date_recorded": process_date(row["track_date_recorded"]),
