@@ -134,7 +134,6 @@ def transform_languages(languages: list[str]) -> list[int]:
         "Turc": 6,
         "hindi": 18,
         "Latin": 46,
-        "Plutôt instrumental": 1235,
     }
     return [language_map[language] for language in languages if language in language_map]
 
