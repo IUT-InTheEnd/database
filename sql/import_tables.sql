@@ -1,4 +1,3 @@
-DELETE FROM import_artist WHERE artist_id::text = 'artist_id';
 INSERT
 	INTO
 	artist

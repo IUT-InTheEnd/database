@@ -1,15 +1,19 @@
 import psycopg2
 import psycopg2.extras
 import csv
+import sys
 
 def connection_db():
-    return psycopg2.connect(
+    conn = psycopg2.connect(
         dbname="InTheEnd_DB",
         user="InTheEnd_User",
         password="InTheEnd_Password",
         host="localhost",
-        port="25000"
+        port="25000",
+        connection_factory=psycopg2.extras.LoggingConnection
     )
+    conn.initialize(sys.stderr)
+    return conn
 
 def main():
     # Execute la création de la base de données
@@ -39,8 +43,11 @@ def main():
     # Execute le script sql import_tables.sql qui importe les données dans les tables
     print("Importing tables...")
     with open('sql/import_tables.sql', 'r') as file:
-        import_commands = file.read()
-    cursor.execute(import_commands)
+        # Splitting commands helps see progress since they take a long time to run
+        import_commands = file.read().split(';')
+    for c in import_commands:
+        c = c.strip()
+        if c != '': cursor.execute(c)
     conn.commit()
     print("Tables imported.")
 

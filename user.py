@@ -9,6 +9,7 @@ import bcrypt
 
 def main():
     df = pd.read_csv("dataset/clean_answers.csv")
+    df.where(df.notnull(), None)
 
     # Suppression des anciens fichiers
     if not os.path.exists("user_data_clean"):
