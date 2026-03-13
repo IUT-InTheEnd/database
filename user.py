@@ -13,7 +13,7 @@ import pandas as pd
 from pipeline_utils import clean_optional_float, clean_text, clear_csv_files, write_csv
 
 
-USER_DATA_DIR = "user_data_clean"
+USER_DATA_DIR = "prepared_seed_data/user"
 PREPARED_LANGUAGE_PATH = Path("prepared_seed_data/import_language.csv")
 PREPARED_GENRE_PATH = Path("prepared_seed_data/import_genre.csv")
 

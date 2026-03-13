@@ -14,7 +14,7 @@ from pipeline_utils import clean_text, is_missing
 
 
 PREPARED_DIR = Path("prepared_seed_data")
-USER_DATA_DIR = Path("user_data_clean")
+USER_DATA_DIR = PREPARED_DIR / "user"
 BATCH_SIZE = 1000
 
 

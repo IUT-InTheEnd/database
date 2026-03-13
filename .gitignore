@@ -218,7 +218,11 @@ ipython_config.py
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
-prepared_seed_data/
+prepared_seed_data/*.csv
+prepared_seed_data/user/*.csv
+!prepared_seed_data/user/
+!prepared_seed_data/user/user_pref.csv
+user_data_clean/
 pgdata/
 
 # Celery stuff
@@ -285,7 +289,3 @@ pyproject.toml
 uv.lock
 peuplement_server.py
 main_server.py
-user_data_clean/parle.csv
-user_data_clean/user_genre*.csv
-user_data_clean/user_profile*.csv
-user_data_clean/user.csv
