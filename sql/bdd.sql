@@ -118,13 +118,13 @@ CREATE TABLE genre (
 
 CREATE TABLE license (
     license_id SERIAL PRIMARY KEY,
-    license_title VARCHAR(100) NOT NULL,
+    license_title VARCHAR(100),
     license_url VARCHAR(512)
 );
 
 CREATE TABLE track (
     track_id SERIAL PRIMARY KEY,
-    track_title VARCHAR(255) NOT NULL,
+    track_title VARCHAR(255),
     track_duration INT,
     track_date_created DATE,
     track_date_recorded DATE,

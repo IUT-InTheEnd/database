@@ -23,7 +23,6 @@ from pipeline_utils import (
 DATASET_DIR = Path("dataset")
 PREPARED_DIR = Path("prepared_seed_data")
 TRACK_GENRE_PATTERN = re.compile(r"'genre_id': '(\d+)'")
-UNKNOWN_LICENSE_TITLE = "Unknown license"
 
 
 def required_title(value: str, fallback: str) -> str:
@@ -267,7 +266,7 @@ def load_tracks(
             if album_id not in album_ids or artist_id not in artist_ids:
                 continue
 
-            license_title = clean_text(row["license_title"]) or UNKNOWN_LICENSE_TITLE
+            license_title = clean_text(row["license_title"])
             license_key = (license_title, clean_text(row["license_url"]))
             if license_key not in license_map:
                 license_id = str(len(license_map) + 1)
@@ -299,7 +298,7 @@ def load_tracks(
             track_rows.append(
                 {
                     "track_id": track_id,
-                    "track_title": required_title(row["track_title"], f"Untitled track {track_id}"),
+                    "track_title": row["track_title"],
                     "track_duration": process_duration(row["track_duration"]),
                     "track_date_created": process_date(row["track_date_created"]),
                     "track_date_recorded": process_date(row["track_date_recorded"]),
