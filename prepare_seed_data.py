@@ -23,6 +23,7 @@ from pipeline_utils import (
 DATASET_DIR = Path("dataset")
 PREPARED_DIR = Path("prepared_seed_data")
 TRACK_GENRE_PATTERN = re.compile(r"'genre_id': '(\d+)'")
+UNKNOWN_LICENSE_TITLE = "Unknown license"
 
 
 def process_language_code(code: str) -> str:
@@ -261,14 +262,15 @@ def load_tracks(
             if album_id not in album_ids or artist_id not in artist_ids:
                 continue
 
-            license_key = (clean_text(row["license_title"]), clean_text(row["license_url"]))
+            license_title = clean_text(row["license_title"]) or UNKNOWN_LICENSE_TITLE
+            license_key = (license_title, clean_text(row["license_url"]))
             if license_key not in license_map:
                 license_id = str(len(license_map) + 1)
                 license_map[license_key] = license_id
                 license_rows.append(
                     {
                         "license_id": license_id,
-                        "license_title": license_key[0],
+                        "license_title": license_title,
                         "license_url": license_key[1],
                     }
                 )
