@@ -93,9 +93,9 @@ def generate_email(user_id: int) -> str:
 
 
 def generate_password_hash(user_id: int) -> str:
-    password = f"password{user_id}"
+    password = f'MotDePasse{user_id}!'
     password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-    # Laravel/PHP expects the historical bcrypt $2y$ prefix even though Python emits $2b$.
+    # PHP expects the historical bcrypt $2y$ prefix even though Python emits $2b$.
     return password_hash.replace("$2b$", "$2y$", 1)
 
 
