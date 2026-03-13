@@ -394,6 +394,11 @@ def main() -> None:
         drop_import_tables(cursor)
         print("Fixing sequences...")
         execute_sql_file(cursor, "sql/fix_sequence.sql")
+        print("User & Permission setup")
+        with open('sql/users.sql', 'r') as file:
+            users_commands = file.read()
+        cursor.execute(users_commands)
+        print("Users and permissions set up.")
         conn.commit()
     finally:
         conn.close()
