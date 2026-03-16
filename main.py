@@ -1,219 +1,363 @@
+from __future__ import annotations
+
+import argparse
+import csv
+import sys
+from pathlib import Path
+
 import psycopg2
 import psycopg2.extras
-import csv
 
-def connection_db():
-    return psycopg2.connect(
+import prepare_seed_data
+import user
+from pipeline_utils import clean_text, is_missing
+
+
+PREPARED_DIR = Path("prepared_seed_data")
+USER_DATA_DIR = PREPARED_DIR / "user"
+USER_PREF_PATH = Path("dataset/user_pref.csv")
+BATCH_SIZE = 1000
+
+
+def connection_db() -> psycopg2.extensions.connection:
+    conn = psycopg2.connect(
         dbname="InTheEnd_DB",
         user="InTheEnd_User",
         password="InTheEnd_Password",
         host="localhost",
-        port="25000"
+        port="25000",
+        connection_factory=psycopg2.extras.LoggingConnection,
+    )
+    conn.initialize(sys.stderr)
+    return conn
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Seed the Muse database.")
+    parser.add_argument(
+        "--rebuild",
+        action="store_true",
+        help="Regenerate prepared CSV artifacts from source datasets before loading the database.",
+    )
+    return parser.parse_args()
+
+
+def execute_sql_file(cursor: psycopg2.extensions.cursor, path: str) -> None:
+    with open(path, "r", encoding="utf-8") as handle:
+        cursor.execute(handle.read())
+
+
+def execute_sql_statements(cursor: psycopg2.extensions.cursor, path: str) -> None:
+    with open(path, "r", encoding="utf-8") as handle:
+        for statement in handle.read().split(";"):
+            sql = statement.strip()
+            if sql:
+                cursor.execute(sql)
+
+
+def copy_csv_to_table(cursor: psycopg2.extensions.cursor, csv_path: Path, table_name: str) -> None:
+    with csv_path.open("r", encoding="utf-8") as handle:
+        cursor.copy_expert(
+            f"COPY {table_name} FROM STDIN WITH (FORMAT CSV, HEADER TRUE)",
+            handle,
+        )
+
+
+def require_prepared_files() -> None:
+    required_files = [
+        PREPARED_DIR / "import_artist.csv",
+        PREPARED_DIR / "import_album.csv",
+        PREPARED_DIR / "import_license.csv",
+        PREPARED_DIR / "import_language.csv",
+        PREPARED_DIR / "import_track.csv",
+        PREPARED_DIR / "import_track_genre.csv",
+        PREPARED_DIR / "import_echonest.csv",
+        PREPARED_DIR / "import_genre.csv",
+        USER_DATA_DIR / "user.csv",
+        USER_DATA_DIR / "user_profile.csv",
+        USER_DATA_DIR / "user_genres_favoris.csv",
+        USER_DATA_DIR / "parle.csv",
+        USER_PREF_PATH,
+    ]
+    missing_files = [str(path) for path in required_files if not path.exists()]
+    if missing_files:
+        missing = "\n".join(missing_files)
+        raise FileNotFoundError(
+            "Missing prepared CSV artifacts. Run `python3 main.py --rebuild` first.\n"
+            f"{missing}"
+        )
+
+
+def rebuild_prepared_artifacts() -> None:
+    print("Rebuilding prepared music seed data...")
+    prepare_seed_data.main()
+    print("Prepared music seed data rebuilt.")
+
+    print("Rebuilding prepared user CSVs...")
+    user.main()
+    print("Prepared user CSVs rebuilt.")
+
+
+def load_import_tables(cursor: psycopg2.extensions.cursor) -> None:
+    execute_sql_file(cursor, "sql/table_import.sql")
+    import_files = {
+        "import_artist": PREPARED_DIR / "import_artist.csv",
+        "import_album": PREPARED_DIR / "import_album.csv",
+        "import_license": PREPARED_DIR / "import_license.csv",
+        "import_language": PREPARED_DIR / "import_language.csv",
+        "import_track": PREPARED_DIR / "import_track.csv",
+        "import_track_genre": PREPARED_DIR / "import_track_genre.csv",
+        "import_echonest": PREPARED_DIR / "import_echonest.csv",
+        "import_genre": PREPARED_DIR / "import_genre.csv",
+    }
+    for table_name, csv_path in import_files.items():
+        print(f"Loading {csv_path} into {table_name}...")
+        copy_csv_to_table(cursor, csv_path, table_name)
+
+
+def optional_int(value: str) -> int | None:
+    text = clean_text(value)
+    return None if text == "" else int(text)
+
+
+def optional_float(value: str) -> float | None:
+    text = clean_text(value)
+    return None if text == "" else float(text)
+
+
+def required_int(value: str) -> int:
+    text = clean_text(value)
+    return int(text or "0")
+
+
+def import_csv_values(
+    cursor: psycopg2.extensions.cursor,
+    csv_path: Path,
+    insert_query: str,
+    row_builder,
+) -> None:
+    with csv_path.open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        buffer: list[tuple[object, ...]] = []
+        for row in reader:
+            buffer.append(row_builder(row))
+            if len(buffer) >= BATCH_SIZE:
+                psycopg2.extras.execute_values(cursor, insert_query, buffer)
+                buffer.clear()
+        if buffer:
+            psycopg2.extras.execute_values(cursor, insert_query, buffer)
+
+
+def import_user_profile(cursor: psycopg2.extensions.cursor) -> None:
+    insert_query = """
+        INSERT INTO user_profile (
+            user_profile_id,
+            music_envy_today,
+            feeling,
+            music_preference,
+            music_style_preference,
+            music_reason,
+            listening_context,
+            current_music_type,
+            usual_listening_mode,
+            likes_discovery,
+            attend_live_concert,
+            repeat_listening,
+            explicit_ok,
+            avg_song_length,
+            avg_daily_listen_time,
+            recommanded_artists
+        ) VALUES %s
+    """
+    import_csv_values(
+        cursor,
+        USER_DATA_DIR / "user_profile.csv",
+        insert_query,
+        lambda row: (
+            required_int(row["user_profile_id"]),
+            clean_text(row["music_envy_today"]),
+            required_int(row["feeling"]),
+            required_int(row["music_preference"]),
+            required_int(row["music_style_preference"]),
+            clean_text(row["music_reason"]),
+            clean_text(row["listening_context"]),
+            optional_int(row["current_music_type"]),
+            required_int(row["usual_listening_mode"]),
+            required_int(row["likes_discovery"]),
+            required_int(row["attend_live_concert"]),
+            required_int(row["repeat_listening"]),
+            required_int(row["explicit_ok"]),
+            float(clean_text(row["avg_song_length"]) or "0"),
+            float(clean_text(row["avg_daily_listen_time"]) or "0"),
+            clean_text(row["recommended_artists"]),
+        ),
     )
 
-def main():
-    # Execute la création de la base de données
-    print("Creating database...")
-    with open('sql/bdd.sql', 'r') as file:
-        sql_commands = file.read()
-    conn = connection_db()
-    cursor = conn.cursor()
-    cursor.execute(sql_commands)
-    conn.commit()
-    print("Database created.")
 
-    # Execute le script peuplement.py
-    print("Populating temp database...")
-    import peuplement
-    peuplement.main()
-    print("Temp Database populated.")
+def import_users(cursor: psycopg2.extensions.cursor) -> None:
+    insert_query = """
+        INSERT INTO "user" (
+            id,
+            name,
+            email,
+            email_verified_at,
+            password,
+            remember_token,
+            created_at,
+            updated_at,
+            user_age,
+            user_job,
+            user_plays_music,
+            user_gender,
+            user_instruments,
+            user_music_contexts,
+            profile_id
+        ) VALUES %s
+    """
+    import_csv_values(
+        cursor,
+        USER_DATA_DIR / "user.csv",
+        insert_query,
+        lambda row: (
+            required_int(row["id"]),
+            clean_text(row["name"]),
+            clean_text(row["email"]),
+            clean_text(row["email_verified_at"]) or None,
+            clean_text(row["password"]),
+            clean_text(row["remember_token"]) or None,
+            clean_text(row["created_at"]) or None,
+            clean_text(row["updated_at"]) or None,
+            optional_float(row["user_age"]),
+            clean_text(row["user_job"]),
+            clean_text(row["user_plays_music"]),
+            clean_text(row["user_gender"]),
+            clean_text(row["user_instruments"]),
+            clean_text(row["user_music_contexts"]),
+            required_int(row["profile_id"]),
+        ),
+    )
 
-    # Crée les triggers et fonctions à pour le sgbd
-    print("Creating triggers and functions for the DBMS...")
-    with open('sql/trigger_bdd.sql', 'r') as file:
-        trigger_commands = file.read()
-    cursor.execute(trigger_commands)
-    conn.commit()
-    print("Triggers and functions created.")
 
-    # Execute le script sql import_tables.sql qui importe les données dans les tables
-    print("Importing tables...")
-    with open('sql/import_tables.sql', 'r') as file:
-        import_commands = file.read()
-    cursor.execute(import_commands)
-    conn.commit()
-    print("Tables imported.")
-
-    # Lancement du script qui crée les csv nettoyés pour l'import des user
-    print("Generating cleaned CSV files for user data...")
-    import user
-    user.main()
-    print("Cleaned CSV files generated.")
-    
-    # Import des données utilisateurs depuis les fichiers csv
-    print("Importing user data from CSV files...")
-    BATCH_SIZE = 1000
+def import_simple_relation(
+    cursor: psycopg2.extensions.cursor,
+    csv_path: Path,
+    insert_query: str,
+    columns: tuple[str, str],
+) -> None:
+    import_csv_values(
+        cursor,
+        csv_path,
+        insert_query,
+        lambda row: (required_int(row[columns[0]]), required_int(row[columns[1]])),
+    )
 
 
-    # Import des profils utilisateurs
-    with open('user_data_clean/user_profile.csv', 'r') as file:
-        reader = csv.reader(file)
-        headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO user_profile (user_profile_id, music_envy_today, feeling, music_preference, music_style_preference, music_reason, listening_context, current_music_type, usual_listening_mode, likes_discovery, attend_live_concert, repeat_listening, explicit_ok, avg_song_length, avg_daily_listen_time, recommanded_artists) VALUES %s"""
-        buffer = []
+def import_user_privacy(cursor: psycopg2.extensions.cursor) -> None:
+    cursor.execute('SELECT id FROM "user" ORDER BY id')
+    user_ids = [(row[0],) for row in cursor.fetchall()]
+    if user_ids:
+        psycopg2.extras.execute_values(
+            cursor,
+            "INSERT INTO user_privacy (id) VALUES %s",
+            user_ids,
+        )
+
+
+def import_user_preferences(cursor: psycopg2.extensions.cursor) -> None:
+    track_relations = load_track_relations()
+    with USER_PREF_PATH.open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        track_buffer: list[tuple[int, int]] = []
+        artist_buffer: list[tuple[int, int]] = []
+        album_buffer: list[tuple[int, int]] = []
         for row in reader:
-            user_profile_id = int(row[headers.index('user_profile_id')])
-            music_envy_today = row[headers.index('music_envy_today')]
-            feeling = int(row[headers.index('feeling')])
-            music_preference = int(row[headers.index('music_preference')])
-            music_style_preference = int(row[headers.index('music_style_preference')])
-            music_reason = row[headers.index('music_reason')]
-            listening_context = row[headers.index('listening_context')]
-            current_music_type = int(row[headers.index('current_music_type')]) if row[headers.index('current_music_type')] != '' else None
-            usual_listening_mode = int(row[headers.index('usual_listening_mode')])
-            likes_discovery = int(row[headers.index('likes_discovery')])
-            attend_live_concert = int(row[headers.index('attend_live_concert')])
-            repeat_listening = int(row[headers.index('repeat_listening')])
-            explicit_ok = int(row[headers.index('explicit_ok')])
-            avg_song_length = float(row[headers.index('avg_song_length')])
-            avg_daily_listen_time = float(row[headers.index('avg_daily_listen_time')])
-            recommanded_artists = row[headers.index('recommended_artists')]
-            buffer.append((user_profile_id, music_envy_today, feeling, music_preference, music_style_preference, music_reason, listening_context, current_music_type, usual_listening_mode, likes_discovery, attend_live_concert, repeat_listening, explicit_ok, avg_song_length, avg_daily_listen_time, recommanded_artists))
-            if len(buffer) >= BATCH_SIZE:
-                psycopg2.extras.execute_values(cursor, insert_query, buffer)
-                buffer.clear()
-        # Insère les restants
-        if buffer:
-            psycopg2.extras.execute_values(cursor, insert_query, buffer)
-            buffer.clear()
-    conn.commit()
-    print("User profile data imported.")
+            if any(is_missing(row[column]) for column in ("user_id", "track_id")):
+                continue
+            user_id = required_int(row["user_id"])
+            track_id = required_int(row["track_id"])
+            relation = track_relations.get(track_id)
+            if relation is None:
+                continue
+            artist_id, album_id = relation
+            track_buffer.append((user_id, track_id))
+            artist_buffer.append((user_id, artist_id))
+            album_buffer.append((user_id, album_id))
 
-    # Import des user (compatible Laravel)
-    with open('user_data_clean/user.csv', 'r') as file:
-        reader = csv.reader(file)
-        headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO "user" (id, name, email, email_verified_at, password, remember_token, created_at, updated_at, user_age, user_job, user_plays_music, user_gender, user_instruments, user_music_contexts, profile_id) VALUES %s"""
-        buffer = []
+            if len(track_buffer) >= BATCH_SIZE:
+                flush_user_preferences(cursor, track_buffer, artist_buffer, album_buffer)
+        flush_user_preferences(cursor, track_buffer, artist_buffer, album_buffer)
+
+
+def load_track_relations() -> dict[int, tuple[int, int]]:
+    track_relations: dict[int, tuple[int, int]] = {}
+    with (PREPARED_DIR / "import_track.csv").open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
         for row in reader:
-            # id,name,email,email_verified_at,password,remember_token,created_at,updated_at,user_age,user_job,user_gender,user_plays_music,user_instruments,user_music_contexts,profile_id
-            user_id = int(row[headers.index('id')])
-            name = row[headers.index('name')]
-            email = row[headers.index('email')]
-            email_verified_at = row[headers.index('email_verified_at')] if row[headers.index('email_verified_at')] else None
-            password = row[headers.index('password')]
-            remember_token = row[headers.index('remember_token')] if row[headers.index('remember_token')] else None
-            created_at = row[headers.index('created_at')] if row[headers.index('created_at')] else None
-            updated_at = row[headers.index('updated_at')] if row[headers.index('updated_at')] else None
-            user_age = float(row[headers.index('user_age')])
-            user_job = row[headers.index('user_job')]
-            user_plays_music = 1 if row[headers.index('user_plays_music')] == '1.0' else 0
-            user_gender = row[headers.index('user_gender')]
-            user_instruments = row[headers.index('user_instruments')]
-            user_music_contexts = row[headers.index('user_music_contexts')]
-            profile_id = int(row[headers.index('profile_id')])
-            buffer.append((user_id, name, email, email_verified_at, password, remember_token, created_at, updated_at, user_age, user_job, user_plays_music, user_gender, user_instruments, user_music_contexts, profile_id))
-            if len(buffer) >= BATCH_SIZE:
-                psycopg2.extras.execute_values(cursor, insert_query, buffer)
-                buffer.clear()
-        # Insère les restants
-        if buffer:
-            psycopg2.extras.execute_values(cursor, insert_query, buffer)
-            buffer.clear()
-    conn.commit()
-    print("User data imported.")
-    
-    # Crée settings privacy
-    cursor.execute("SELECT COUNT(*) FROM \"user\"")
-    nb_user = cursor.fetchone()[0]
-    for i in range(1, nb_user+1):
-        cursor.execute("INSERT INTO user_privacy (id) VALUES (%s)", (i,))
+            track_id = required_int(row["track_id"])
+            track_relations[track_id] = (
+                required_int(row["artist_id"]),
+                required_int(row["album_id"]),
+            )
+    return track_relations
 
-    # Import des genres favoris des user
-    with open('user_data_clean/user_genres_favoris.csv', 'r') as file:
-        reader = csv.reader(file)
-        headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO ajoute_genre_favoris (user_id, genre_id) VALUES %s"""
-        buffer = []
-        for row in reader:
-            user_id = int(row[headers.index('user_id')])
-            genre_id = int(row[headers.index('genre_id')])
-            buffer.append((user_id, genre_id))
-            if len(buffer) >= BATCH_SIZE:
-                psycopg2.extras.execute_values(cursor, insert_query, buffer)
-                buffer.clear()
-        # Insère les restants
-        if buffer:
-            psycopg2.extras.execute_values(cursor, insert_query, buffer)
-            buffer.clear()
-    conn.commit()
-    print("User favorite genre data imported.")
 
-    # Import de la langue préférée des user
-    with open('user_data_clean/parle.csv', 'r') as file:
-        reader = csv.reader(file)
-        headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO user_parle (user_id, language_id) VALUES %s"""
-        buffer = []
-        for row in reader:
-            user_id = int(row[headers.index('user_id')])
-            language_id = int(row[headers.index('language_id')])
-            buffer.append((user_id, language_id))
-            if len(buffer) >= BATCH_SIZE:
-                psycopg2.extras.execute_values(cursor, insert_query, buffer)
-                buffer.clear()
-        # Insère les restants
-        if buffer:
-            psycopg2.extras.execute_values(cursor, insert_query, buffer)
-            buffer.clear()
-    conn.commit()
-    print("User language preference data imported.")
+def flush_user_preferences(
+    cursor: psycopg2.extensions.cursor,
+    track_buffer: list[tuple[int, int]],
+    artist_buffer: list[tuple[int, int]],
+    album_buffer: list[tuple[int, int]],
+) -> None:
+    if track_buffer:
+        psycopg2.extras.execute_values(
+            cursor,
+            "INSERT INTO ajoute_favori (user_id, track_id) VALUES %s ON CONFLICT DO NOTHING",
+            track_buffer,
+        )
+        track_buffer.clear()
+    if artist_buffer:
+        psycopg2.extras.execute_values(
+            cursor,
+            "INSERT INTO user_prefere_artiste (user_id, artist_id) VALUES %s ON CONFLICT DO NOTHING",
+            artist_buffer,
+        )
+        artist_buffer.clear()
+    if album_buffer:
+        psycopg2.extras.execute_values(
+            cursor,
+            "INSERT INTO user_ajoute_album_favoris (user_id, album_id) VALUES %s ON CONFLICT DO NOTHING",
+            album_buffer,
+        )
+        album_buffer.clear()
 
-    print("User favorite music data import completed.")
-    with open('user_data_clean/user_pref.csv', 'r') as file:
-        reader = csv.reader(file)
-        headers = next(reader)  # Passe l'entête
-        insert_query = """INSERT INTO ajoute_favori (user_id, track_id) VALUES %s ON CONFLICT DO NOTHING"""
-        insert_query2 = """INSERT INTO user_prefere_artiste (user_id, artist_id) VALUES %s ON CONFLICT DO NOTHING"""
-        insert_query3 = """INSERT INTO user_ajoute_album_favoris (user_id, album_id) VALUES %s ON CONFLICT DO NOTHING"""
-        buffer = []
-        buffer2 = []
-        buffer3 = []
-        for row in reader:
-            user_id = int(row[headers.index('user_id')])
-            track_id = int(row[headers.index('track_id')])
-            album_id = int(row[headers.index('album_id')])
-            artist_id = int(row[headers.index('artist_id')])
-            buffer.append((user_id, track_id))
-            buffer2.append((user_id, artist_id))
-            buffer3.append((user_id, album_id))
-            if len(buffer) >= BATCH_SIZE:
-                psycopg2.extras.execute_values(cursor, insert_query, buffer)
-                buffer.clear()
-            if len(buffer2) >= BATCH_SIZE:
-                psycopg2.extras.execute_values(cursor, insert_query2, buffer2)
-                buffer2.clear()
-            if len(buffer3) >= BATCH_SIZE:
-                psycopg2.extras.execute_values(cursor, insert_query3, buffer3)
-                buffer3.clear()
-        # Insère les restants
-        if buffer:
-            psycopg2.extras.execute_values(cursor, insert_query, buffer)
-            buffer.clear()
-        if buffer2:
-            psycopg2.extras.execute_values(cursor, insert_query2, buffer2)
-            buffer2.clear()
-        if buffer3:
-            psycopg2.extras.execute_values(cursor, insert_query3, buffer3)
-            buffer3.clear()
-    conn.commit()
-    print("User favorite music data imported.")
-        
-    print("All data imported successfully.")
 
-    print("Delete import tables...")
-    
-    query = """
+def import_user_data(cursor: psycopg2.extensions.cursor) -> None:
+    print("Importing user profile data...")
+    import_user_profile(cursor)
+    print("Importing users...")
+    import_users(cursor)
+    print("Creating user privacy rows...")
+    import_user_privacy(cursor)
+    print("Importing favorite genres...")
+    import_simple_relation(
+        cursor,
+        USER_DATA_DIR / "user_genres_favoris.csv",
+        "INSERT INTO ajoute_genre_favoris (user_id, genre_id) VALUES %s",
+        ("user_id", "genre_id"),
+    )
+    print("Importing spoken languages...")
+    import_simple_relation(
+        cursor,
+        USER_DATA_DIR / "parle.csv",
+        "INSERT INTO user_parle (user_id, language_id) VALUES %s",
+        ("user_id", "language_id"),
+    )
+    print("Importing favorite tracks, artists, and albums...")
+    import_user_preferences(cursor)
+
+
+def drop_import_tables(cursor: psycopg2.extensions.cursor) -> None:
+    cursor.execute(
+        """
         DROP TABLE IF EXISTS import_artist;
         DROP TABLE IF EXISTS import_album;
         DROP TABLE IF EXISTS import_track;
@@ -222,31 +366,45 @@ def main():
         DROP TABLE IF EXISTS import_license;
         DROP TABLE IF EXISTS import_language;
         DROP TABLE IF EXISTS import_track_genre;
-    """
-    cursor.execute(query)
-    conn.commit()
-    print("Import tables deleted.")
-    
-    print("Fix table sequence")
-    with open('sql/fix_sequence.sql', 'r') as file:
-        fix_sequence_commands = file.read()
-    cursor.execute(fix_sequence_commands)
-    conn.commit()
-    print("Table sequence fixed.")
-    
-    print("User & Permission setup")
-    with open('sql/users.sql', 'r') as file:
-        users_commands = file.read()
-    cursor.execute(users_commands)
-    conn.commit()
-    print("Users and permissions set up.")
+        """
+    )
 
-    cursor.close()
-    conn.close()
-    print("End.")
+
+def main() -> None:
+    args = parse_args()
+    if args.rebuild:
+        rebuild_prepared_artifacts()
+
+    require_prepared_files()
+
+    conn = connection_db()
+    try:
+        cursor = conn.cursor()
+        print("Creating database schema...")
+        execute_sql_file(cursor, "sql/bdd.sql")
+        print("Creating triggers and functions...")
+        execute_sql_file(cursor, "sql/trigger_bdd.sql")
+        print("Loading prepared import tables...")
+        load_import_tables(cursor)
+        print("Importing core tables...")
+        execute_sql_statements(cursor, "sql/import_tables.sql")
+        print("Importing user data...")
+        import_user_data(cursor)
+        print("Dropping import tables...")
+        drop_import_tables(cursor)
+        print("Fixing sequences...")
+        execute_sql_file(cursor, "sql/fix_sequence.sql")
+        print("User & Permission setup")
+        with open('sql/users.sql', 'r') as file:
+            users_commands = file.read()
+        cursor.execute(users_commands)
+        print("Users and permissions set up.")
+        conn.commit()
+    finally:
+        conn.close()
+
+    print("Seed completed.")
 
 
 if __name__ == "__main__":
     main()
-
-

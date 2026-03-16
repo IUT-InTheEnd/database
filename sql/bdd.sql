@@ -1,28 +1,6 @@
-DROP TABLE IF EXISTS user_ecoute CASCADE;
-DROP TABLE IF EXISTS user_ajoute_album_favoris CASCADE;
-DROP TABLE IF EXISTS ajoute_genre_favoris CASCADE;
-DROP TABLE IF EXISTS ajoute_favori CASCADE;
-DROP TABLE IF EXISTS supervise CASCADE;
-DROP TABLE IF EXISTS contient_genres CASCADE;
-DROP TABLE IF EXISTS user_prefere_artiste CASCADE;
-DROP TABLE IF EXISTS realiser CASCADE;
-DROP TABLE IF EXISTS track_chanter_en CASCADE;
-DROP TABLE IF EXISTS artiste_chante CASCADE;
-DROP TABLE IF EXISTS user_parle CASCADE;
-DROP TABLE IF EXISTS playlist_contient_track CASCADE;
-DROP TABLE IF EXISTS playlist CASCADE;
-DROP TABLE IF EXISTS track_echonest CASCADE;
-DROP TABLE IF EXISTS track CASCADE;
-DROP TABLE IF EXISTS license CASCADE;
-DROP TABLE IF EXISTS genre CASCADE;
-DROP TABLE IF EXISTS album CASCADE;
-DROP TABLE IF EXISTS user_preference_echonest CASCADE;
-DROP TABLE IF EXISTS represente CASCADE;
-DROP TABLE IF EXISTS "user" CASCADE;
-DROP TABLE IF EXISTS user_profile CASCADE;
-DROP TABLE IF EXISTS artist CASCADE;
-DROP TABLE IF EXISTS language CASCADE;
-DROP TABLE IF EXISTS user_privacy CASCADE;
+drop schema public cascade;
+create schema public;
+set schema 'public';
 
 CREATE TABLE user_profile (
     user_profile_id SERIAL PRIMARY KEY,
@@ -118,13 +96,13 @@ CREATE TABLE genre (
 
 CREATE TABLE license (
     license_id SERIAL PRIMARY KEY,
-    license_title VARCHAR(100) NOT NULL,
+    license_title VARCHAR(100),
     license_url VARCHAR(512)
 );
 
 CREATE TABLE track (
     track_id SERIAL PRIMARY KEY,
-    track_title VARCHAR(255) NOT NULL,
+    track_title VARCHAR(255),
     track_duration INT,
     track_date_created DATE,
     track_date_recorded DATE,
@@ -295,3 +273,22 @@ CREATE TABLE user_ecoute (
     last_listen DATE,
     PRIMARY KEY (user_id, track_id)
 );
+
+CREATE TABLE personal_access_tokens (
+    id BIGSERIAL PRIMARY KEY,
+    tokenable_type VARCHAR(255) NOT NULL,
+    tokenable_id BIGINT NOT NULL,
+    name TEXT NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    abilities TEXT,
+    last_used_at TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    expires_at TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    created_at TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    updated_at TIMESTAMP(0) WITHOUT TIME ZONE NULL
+);
+
+CREATE INDEX personal_access_tokens_tokenable_type_tokenable_id_index
+ON personal_access_tokens (tokenable_type, tokenable_id);
+
+CREATE INDEX personal_access_tokens_expires_at_index
+ON personal_access_tokens (expires_at);
