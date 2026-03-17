@@ -1,6 +1,6 @@
 INSERT
 	INTO
-	artist
+	artist (artist_id,artist_name,artist_location,artist_latitude,artist_longitude,artist_favorites,artist_comments,artist_listens,artist_active_year_begin,artist_active_year_end,artist_url,artist_website,artist_wikipedia_page,artist_handle,artist_bio,artist_members,artist_associated_labels,artist_related_projects,artist_contact,artist_donation_url,artist_paypal_name,artist_flattr_name,artist_date_created,artist_image_file)
 SELECT
 	artist_id::int,
 	artist_name,
@@ -44,7 +44,7 @@ FROM
 
 INSERT
 	INTO
-	album
+	album (album_id,album_title,album_date_release,album_date_created,album_listens,album_favorites,album_comments,album_type,album_url,album_handle,album_information,album_tracks,album_producer,album_engineer,album_image_file)
 SELECT
 	album_id::int,
 	album_title,
@@ -76,7 +76,7 @@ FROM
 
 INSERT
 	INTO
-	track
+	track (track_id,track_title,track_duration,track_date_created,track_date_recorded,track_composer,track_lyricist,track_publisher,track_listens,track_favorites,track_comments,track_interest,track_copyright_c,track_copyright_p,track_explicit,track_explicit_note,track_instrumental,track_language_code,track_url,track_file,track_image_file,license_id)
 SELECT
 	track_id::int,
 	track_title,
@@ -126,7 +126,7 @@ WHERE
 
 INSERT
 	INTO
-	genre
+	genre (genre_id,genre_parent_id,genre_title,genre_handle,genre_color,top_level)
 SELECT
 	genre_id::int,
 	CASE
@@ -144,7 +144,7 @@ WHERE
 
 INSERT
 	INTO
-	track_echonest
+	track_echonest (track_id,acousticness,energy,instrumentalness,liveness,speechiness,valence,danceability,tempo,artist_discovery,artist_hottness,artist_familiarity,track_hottness,track_currency)
 SELECT
 	track_id::int,
 	NULLIF(acousticness, '')::float,
@@ -165,7 +165,7 @@ FROM
 
 INSERT
 	INTO
-	contient_genres
+	contient_genres (track_id, genre_id)
 SELECT
 	track_id::int,
 	genre_id::int
@@ -174,7 +174,7 @@ FROM
 
 INSERT
 	INTO
-	realiser
+	realiser (album_id,track_id,artist_id)
 SELECT
 	album_id::int,
 	track_id::int,
@@ -184,7 +184,7 @@ FROM
 
 INSERT
 	INTO
-	language
+	language (language_id, language_label, language_handle)
 SELECT
 	language_id::int,
 	language_name,
@@ -194,7 +194,7 @@ FROM
 
 INSERT
 	INTO
-	track_chanter_en
+	track_chanter_en (track_id, language_id)
 SELECT
 	track_id::int,
 	language_id::int
@@ -203,7 +203,7 @@ FROM
 
 INSERT
 	INTO
-	artiste_chante
+	artiste_chante (artist_id, language_id)
 SELECT
 	DISTINCT artist_id::int,
 	language_id::int

@@ -74,6 +74,8 @@ CREATE TABLE album (
     album_date_created DATE,
     album_listens INT DEFAULT 0,
     album_favorites INT DEFAULT 0,
+    album_likes INT DEFAULT 0,
+    album_dislikes INT DEFAULT 0,
     album_comments INT DEFAULT 0,
     album_type VARCHAR(50),
     album_url VARCHAR(512),
@@ -111,6 +113,8 @@ CREATE TABLE track (
     track_publisher VARCHAR(255),
     track_listens INT DEFAULT 0,
     track_favorites INT DEFAULT 0,
+    track_likes INT DEFAULT 0,
+    track_dislikes INT DEFAULT 0,
     track_comments INT DEFAULT 0,
     track_interest INT DEFAULT 0,
     track_copyright_c VARCHAR(255),
@@ -265,6 +269,44 @@ CREATE TABLE user_ajoute_album_favoris (
     album_id INT REFERENCES album(album_id),
     PRIMARY KEY (user_id, album_id)
 );
+
+CREATE TABLE track_reaction (
+    reaction_id SERIAL PRIMARY KEY,
+    track_id INT NOT NULL REFERENCES track(track_id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES "user"(id) ON DELETE CASCADE,
+    visitor_id UUID,
+    reaction VARCHAR(16) NOT NULL CHECK (reaction IN ('like', 'dislike')),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CHECK (((user_id IS NOT NULL)::INT + (visitor_id IS NOT NULL)::INT) = 1)
+);
+
+CREATE UNIQUE INDEX track_reaction_track_user_unique
+    ON track_reaction (track_id, user_id)
+    WHERE user_id IS NOT NULL;
+
+CREATE UNIQUE INDEX track_reaction_track_visitor_unique
+    ON track_reaction (track_id, visitor_id)
+    WHERE visitor_id IS NOT NULL;
+
+CREATE TABLE album_reaction (
+    reaction_id SERIAL PRIMARY KEY,
+    album_id INT NOT NULL REFERENCES album(album_id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES "user"(id) ON DELETE CASCADE,
+    visitor_id UUID,
+    reaction VARCHAR(16) NOT NULL CHECK (reaction IN ('like', 'dislike')),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CHECK (((user_id IS NOT NULL)::INT + (visitor_id IS NOT NULL)::INT) = 1)
+);
+
+CREATE UNIQUE INDEX album_reaction_album_user_unique
+    ON album_reaction (album_id, user_id)
+    WHERE user_id IS NOT NULL;
+
+CREATE UNIQUE INDEX album_reaction_album_visitor_unique
+    ON album_reaction (album_id, visitor_id)
+    WHERE visitor_id IS NOT NULL;
 
 CREATE TABLE user_ecoute (
     user_id BIGINT REFERENCES "user"(id),

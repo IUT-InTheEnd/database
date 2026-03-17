@@ -67,6 +67,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
     user_prefere_artiste,
     user_ajoute_album_favoris,
     ajoute_genre_favoris,
+    track_reaction,
+    album_reaction,
     user_preference_echonest,
     playlist,
     playlist_contient_track
@@ -80,6 +82,8 @@ TO "InTheEnd_API";
 -- Séquence des playlists et tokens d'accès personnels (pour les INSERT)
 GRANT USAGE, SELECT ON SEQUENCE
     playlist_playlist_id_seq,
+    track_reaction_reaction_id_seq,
+    album_reaction_reaction_id_seq,
     personal_access_tokens_id_seq
 TO "InTheEnd_API";
 
@@ -103,6 +107,8 @@ ALTER USER "InTheEnd_API" WITH PASSWORD 'MdpApi!!!!!!!!!';
 --  user_prefere_artiste       | CRUD          | ALL      | CRUD
 --  user_ajoute_album_favoris  | CRUD          | ALL      | CRUD
 --  ajoute_genre_favoris       | CRUD          | ALL      | CRUD
+--  track_reaction             | CRUD          | ALL      | CRUD
+--  album_reaction             | CRUD          | ALL      | CRUD
 --  user_preference_echonest   | CRUD          | ALL      | CRUD
 --  playlist                   | CRUD          | ALL      | CRUD
 --  playlist_contient_track    | CRUD          | ALL      | CRUD
