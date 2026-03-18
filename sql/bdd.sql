@@ -334,3 +334,19 @@ ON personal_access_tokens (tokenable_type, tokenable_id);
 
 CREATE INDEX personal_access_tokens_expires_at_index
 ON personal_access_tokens (expires_at);
+
+-- ROLE
+CREATE TABLE role (
+  id_role SERIAL PRIMARY KEY,
+  nom VARCHAR(10) NOT NULL
+);
+
+INSERT INTO role (nom) VALUES ('admin'), ('user');
+
+ALTER TABLE "user"
+ADD COLUMN id_role INT DEFAULT 2;
+
+ALTER TABLE "user"
+ADD CONSTRAINT fk_role
+FOREIGN KEY (id_role)
+REFERENCES role(id_role);
