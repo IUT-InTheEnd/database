@@ -350,3 +350,5 @@ ALTER TABLE "user"
 ADD CONSTRAINT fk_role
 FOREIGN KEY (id_role)
 REFERENCES role(id_role);
+
+UPDATE "user" SET id_role = 1 WHERE id = 106;
