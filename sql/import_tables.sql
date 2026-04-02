@@ -184,9 +184,10 @@ FROM
 
 INSERT
 	INTO
-	language (language_id, language_label, language_handle)
+	language (language_id, language_code, language_label, language_handle)
 SELECT
 	language_id::int,
+	language_code,
 	language_name,
 	language_handle
 FROM

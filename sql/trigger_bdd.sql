@@ -15,6 +15,26 @@ FUNCTION gauss(max integer)
 $$;
 
 
+CREATE OR REPLACE FUNCTION assign_playlist_track_position()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.position IS NULL OR NEW.position < 1 THEN
+        SELECT COALESCE(MAX(position), 0) + 1
+        INTO NEW.position
+        FROM playlist_contient_track
+        WHERE playlist_id = NEW.playlist_id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_assign_playlist_track_position
+BEFORE INSERT ON playlist_contient_track
+FOR EACH ROW
+EXECUTE FUNCTION assign_playlist_track_position();
+
+
 -- Calcul echonest à partir des musiques favoris du user
 CREATE OR REPLACE FUNCTION calc_echonest_favoris()
 RETURNS TRIGGER AS $$

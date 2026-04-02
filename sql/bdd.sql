@@ -177,6 +177,7 @@ CREATE TABLE artist (
 
 CREATE TABLE language (
     language_id SERIAL PRIMARY KEY,
+    language_code VARCHAR(10),
     language_label VARCHAR(100) NOT NULL,
     language_handle VARCHAR(50)
 );
@@ -200,6 +201,7 @@ CREATE TABLE playlist (
 CREATE TABLE playlist_contient_track (
     playlist_id INT REFERENCES playlist(playlist_id),
     track_id INT REFERENCES track(track_id),
+    position INT NOT NULL,
     PRIMARY KEY (playlist_id, track_id)
 );
 
