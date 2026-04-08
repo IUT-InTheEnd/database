@@ -15,7 +15,7 @@ from pipeline_utils import clean_text, is_missing
 
 PREPARED_DIR = Path("prepared_seed_data")
 USER_DATA_DIR = PREPARED_DIR / "user"
-USER_PREF_PATH = Path("dataset/user_pref.csv")
+USER_PREF_PATH = USER_DATA_DIR / "user_pref.csv"
 BATCH_SIZE = 1000
 
 

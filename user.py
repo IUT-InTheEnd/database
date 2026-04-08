@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import csv
 import json
+import math
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -16,6 +17,10 @@ from pipeline_utils import clean_optional_float, clean_text, clear_csv_files, wr
 USER_DATA_DIR = "prepared_seed_data/user"
 PREPARED_LANGUAGE_PATH = Path("prepared_seed_data/import_language.csv")
 PREPARED_GENRE_PATH = Path("prepared_seed_data/import_genre.csv")
+PREPARED_TRACK_PATH = Path("prepared_seed_data/import_track.csv")
+PREPARED_ARTIST_PATH = Path("prepared_seed_data/import_artist.csv")
+PREPARED_TRACK_GENRE_PATH = Path("prepared_seed_data/import_track_genre.csv")
+DEFAULT_FAVORITE_TRACKS = 12
 
 FEELING_MAP = {
     "Calme": 0,
@@ -81,6 +86,13 @@ SURVEY_LANGUAGE_CODES = {
     "hindi": "hi",
     "Latin": "la",
     "Plutôt instrumental": "",
+}
+
+SURVEY_EXPLORE_GENRES = {
+    "Musique de films": ["Instrumental", "Classical"],
+    "Metal": ["Rock", "Experimental"],
+    "Musique de jeux de rythme": ["Electronic"],
+    "Peu importe": [],
 }
 
 
@@ -270,8 +282,173 @@ def build_user_language_rows(df: pd.DataFrame, language_ids_by_code: dict[str, i
     return rows
 
 
+def normalize_text(value: Any) -> str:
+    return clean_text(value).casefold()
+
+
+def load_artist_names_by_id() -> dict[int, str]:
+    artist_names_by_id: dict[int, str] = {}
+    with PREPARED_ARTIST_PATH.open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            artist_names_by_id[int(row["artist_id"])] = clean_text(row["artist_name"])
+    return artist_names_by_id
+
+
+def load_track_genres() -> dict[int, set[int]]:
+    track_genres: dict[int, set[int]] = {}
+    with PREPARED_TRACK_GENRE_PATH.open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            track_id = int(row["track_id"])
+            genre_id = int(row["genre_id"])
+            track_genres.setdefault(track_id, set()).add(genre_id)
+    return track_genres
+
+
+def load_catalog_tracks() -> list[dict[str, Any]]:
+    artist_names_by_id = load_artist_names_by_id()
+    track_genres = load_track_genres()
+    tracks: list[dict[str, Any]] = []
+
+    with PREPARED_TRACK_PATH.open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            track_id = int(row["track_id"])
+            artist_id = int(row["artist_id"])
+            album_id = int(row["album_id"])
+            language_code = clean_text(row["track_language_code"])
+            track_title = clean_text(row["track_title"])
+            artist_name = artist_names_by_id.get(artist_id, "")
+            popularity = (
+                int(clean_text(row["track_interest"]) or "0")
+                + int(clean_text(row["track_listens"]) or "0")
+                + int(clean_text(row["track_favorites"]) or "0") * 10
+            )
+
+            tracks.append(
+                {
+                    "track_id": track_id,
+                    "artist_id": artist_id,
+                    "album_id": album_id,
+                    "artist_name": artist_name,
+                    "artist_name_norm": normalize_text(artist_name),
+                    "track_title_norm": normalize_text(track_title),
+                    "genre_ids": track_genres.get(track_id, set()),
+                    "language_code": language_code,
+                    "instrumental": clean_text(row["track_instrumental"]) == "1",
+                    "explicit": clean_text(row["track_explicit"]) in {"Radio-Unsafe", "Adults-Only"},
+                    "popularity": popularity,
+                }
+            )
+
+    return tracks
+
+
+def expand_survey_genres(genres: list[str]) -> list[str]:
+    expanded = list(genres)
+    for genre in genres:
+        expanded.extend(SURVEY_EXPLORE_GENRES.get(genre, []))
+    return expanded
+
+
+def build_favorite_track_rows(
+    df: pd.DataFrame,
+    genre_ids_by_title: dict[str, int],
+) -> list[dict[str, int]]:
+    tracks = load_catalog_tracks()
+    rows: list[dict[str, int]] = []
+
+    for _, row in df.iterrows():
+        user_id = int(row["user_id"])
+        song_languages = parse_list(row["song_languages"])
+        preferred_genre_ids = set(
+            transform_genres(expand_survey_genres(parse_list(row["current_genres"])), genre_ids_by_title)
+        )
+        preferred_language_codes = {
+            SURVEY_LANGUAGE_CODES.get(language, "")
+            for language in song_languages
+        }
+        preferred_language_codes.discard("")
+        likes_instrumental = "Plutôt instrumental" in song_languages
+        explicit_ok = clean_text(row["explicit_ok"]) != "0"
+        artist_terms = {
+            term
+            for term in (normalize_text(term) for term in parse_list(row["recommended_artists"]))
+            if len(term) >= 3 and term not in {"artiste", "artistes", "groupe", "groupes", "général", "general", "titre", "titres", "song", "songs"}
+        }
+
+        candidates: list[tuple[float, dict[str, Any]]] = []
+        fallback_candidates: list[tuple[float, dict[str, Any]]] = []
+
+        for track in tracks:
+            if not explicit_ok and track["explicit"]:
+                continue
+
+            score = math.log10(track["popularity"] + 10)
+            genre_matches = len(track["genre_ids"] & preferred_genre_ids)
+            if genre_matches:
+                score += 12 * genre_matches
+
+            if track["language_code"] and track["language_code"] in preferred_language_codes:
+                score += 8
+
+            if likes_instrumental and track["instrumental"]:
+                score += 8
+
+            artist_match = any(term in track["artist_name_norm"] for term in artist_terms)
+            title_match = any(term in track["track_title_norm"] for term in artist_terms)
+            if artist_match:
+                score += 24
+            if title_match:
+                score += 10
+
+            if genre_matches or artist_match or title_match or (likes_instrumental and track["instrumental"]) or (
+                track["language_code"] and track["language_code"] in preferred_language_codes
+            ):
+                candidates.append((score, track))
+            else:
+                fallback_candidates.append((score, track))
+
+        selected: list[dict[str, Any]] = []
+        seen_track_ids: set[int] = set()
+        seen_artist_ids: set[int] = set()
+
+        for _, track in sorted(candidates, key=lambda item: item[0], reverse=True):
+            if track["track_id"] in seen_track_ids:
+                continue
+            if track["artist_id"] in seen_artist_ids and len(selected) < DEFAULT_FAVORITE_TRACKS // 2:
+                continue
+            selected.append(track)
+            seen_track_ids.add(track["track_id"])
+            seen_artist_ids.add(track["artist_id"])
+            if len(selected) >= DEFAULT_FAVORITE_TRACKS:
+                break
+
+        if len(selected) < DEFAULT_FAVORITE_TRACKS:
+            for _, track in sorted(fallback_candidates, key=lambda item: item[0], reverse=True):
+                if track["track_id"] in seen_track_ids:
+                    continue
+                selected.append(track)
+                seen_track_ids.add(track["track_id"])
+                if len(selected) >= DEFAULT_FAVORITE_TRACKS:
+                    break
+
+        for track in selected:
+            rows.append(
+                {
+                    "user_id": user_id,
+                    "track_id": track["track_id"],
+                    "artist_id": track["artist_id"],
+                    "album_id": track["album_id"],
+                }
+            )
+
+    return rows
+
+
 def main() -> None:
-    clear_csv_files(USER_DATA_DIR, keep={"user_pref.csv"})
+    clear_csv_files(USER_DATA_DIR)
     df = pd.read_csv("dataset/clean_answers.csv", keep_default_na=False)
 
     if "user_id" not in df.columns:
@@ -332,6 +509,11 @@ def main() -> None:
         f"{USER_DATA_DIR}/parle.csv",
         ["user_id", "language_id"],
         build_user_language_rows(df, language_ids_by_code),
+    )
+    write_csv(
+        f"{USER_DATA_DIR}/user_pref.csv",
+        ["album_id", "track_id", "artist_id", "user_id"],
+        build_favorite_track_rows(df, genre_ids_by_title),
     )
 
 
