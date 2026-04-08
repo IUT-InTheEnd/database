@@ -68,6 +68,10 @@ def process_duration(duration_str: str) -> str:
     return clean_required_int(value)
 
 
+def has_playable_track_source(row: dict[str, str]) -> bool:
+    return bool(clean_text(row["track_file"]) or clean_text(row["track_url"]))
+
+
 def prepare_seed_data() -> None:
     clear_csv_files(PREPARED_DIR)
     ensure_directory(PREPARED_DIR)
@@ -264,6 +268,9 @@ def load_tracks(
             artist_id = clean_required_int(row["artist_id"])
             track_id = clean_required_int(row["track_id"])
             if album_id not in album_ids or artist_id not in artist_ids:
+                continue
+
+            if not has_playable_track_source(row):
                 continue
 
             license_title = clean_text(row["license_title"])
