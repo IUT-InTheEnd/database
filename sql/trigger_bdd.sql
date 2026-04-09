@@ -38,43 +38,60 @@ EXECUTE FUNCTION assign_playlist_track_position();
 -- Calcul echonest à partir des musiques favoris du user
 CREATE OR REPLACE FUNCTION calc_echonest_favoris()
 RETURNS TRIGGER AS $$
+DECLARE
+    target_user_id BIGINT := COALESCE(NEW.user_id, OLD.user_id);
 BEGIN
+    IF target_user_id IS NULL THEN
+        RETURN COALESCE(NEW, OLD);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM ajoute_favori
+        WHERE user_id = target_user_id
+    ) THEN
+        DELETE FROM user_preference_echonest
+        WHERE user_id = target_user_id;
+
+        RETURN COALESCE(NEW, OLD);
+    END IF;
+
     -- Update si le user existe déjà
-    IF EXISTS (SELECT 1 FROM user_preference_echonest WHERE user_id = NEW.user_id) THEN
+    IF EXISTS (SELECT 1 FROM user_preference_echonest WHERE user_id = target_user_id) THEN
         UPDATE user_preference_echonest
         SET acousticness = (SELECT AVG(te.acousticness)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             energy = (SELECT AVG(te.energy)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             instrumentalness = (SELECT AVG(te.instrumentalness)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             liveness = (SELECT AVG(te.liveness)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             speechiness = (SELECT AVG(te.speechiness)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             valence = (SELECT AVG(te.valence)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             danceability = (SELECT AVG(te.danceability)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             tempo = (SELECT AVG(te.tempo)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id)
-        WHERE user_id = NEW.user_id;
+                WHERE af.user_id = target_user_id)
+        WHERE user_id = target_user_id;
     ELSE
         -- Insert new data
         INSERT INTO user_preference_echonest (acousticness, energy, instrumentalness, liveness, speechiness, valence, danceability, tempo, user_id)
@@ -82,39 +99,39 @@ BEGIN
             (SELECT AVG(te.acousticness)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             (SELECT AVG(te.energy)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             (SELECT AVG(te.instrumentalness)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             (SELECT AVG(te.liveness)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             (SELECT AVG(te.speechiness)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             (SELECT AVG(te.valence)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             (SELECT AVG(te.danceability)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
+                WHERE af.user_id = target_user_id),
             (SELECT AVG(te.tempo)
                 FROM ajoute_favori af
                 JOIN track_echonest te ON af.track_id = te.track_id
-                WHERE af.user_id = NEW.user_id),
-            NEW.user_id
+                WHERE af.user_id = target_user_id),
+            target_user_id
         );
     END IF;
-    RETURN NEW;
+    RETURN COALESCE(NEW, OLD);
 END;
 $$ LANGUAGE plpgsql;
 
