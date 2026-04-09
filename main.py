@@ -24,8 +24,8 @@ def connection_db() -> psycopg2.extensions.connection:
         dbname="InTheEnd_DB",
         user="InTheEnd_User",
         password="InTheEnd_Password",
-        host="localhost",
-        port="25000",
+        host="159.195.50.108",
+        port="25504",
         connection_factory=psycopg2.extras.LoggingConnection,
     )
     conn.initialize(sys.stderr)
@@ -49,7 +49,10 @@ def execute_sql_file(cursor: psycopg2.extensions.cursor, path: str) -> None:
 
 def execute_sql_statements(cursor: psycopg2.extensions.cursor, path: str) -> None:
     with open(path, "r", encoding="utf-8") as handle:
-        for statement in handle.read().split(";"):
+        content = handle.read()
+        lines = [line.split('--')[0].strip() for line in content.split('\n')]
+        content = '\n'.join(lines)
+        for statement in content.split(";"):
             sql = statement.strip()
             if sql:
                 cursor.execute(sql)
@@ -372,6 +375,19 @@ def drop_import_tables(cursor: psycopg2.extensions.cursor) -> None:
     )
 
 
+def create_roles(cursor: psycopg2.extensions.cursor, conn: psycopg2.extensions.connection) -> None:
+    roles = ["InTheEnd_User", "InTheEnd_Admin", "InTheEnd_API"]
+    logins = ["InTheEnd_Password", "InTheEndAdmin_Password", "MdpApi!!!!!!!!!"]
+    for role in roles:
+        try:
+            cursor.execute(f"CREATE ROLE \"{role}\" WITH LOGIN PASSWORD %s", (logins[roles.index(role)],))
+        except psycopg2.Error as e:
+            conn.rollback()
+            if "already exists" not in str(e):
+                print(f"Warning: Could not create role {role}: {e}")
+            cursor = conn.cursor()
+
+
 def main() -> None:
     args = parse_args()
     if args.rebuild:
@@ -397,9 +413,9 @@ def main() -> None:
         print("Fixing sequences...")
         execute_sql_file(cursor, "sql/fix_sequence.sql")
         print("User & Permission setup")
-        with open('sql/users.sql', 'r') as file:
-            users_commands = file.read()
-        cursor.execute(users_commands)
+        create_roles(cursor, conn)
+        print("Granting permissions...")
+        execute_sql_statements(cursor, "sql/users.sql")
         print("Users and permissions set up.")
         conn.commit()
     finally:
