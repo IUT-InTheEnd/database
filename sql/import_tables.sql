@@ -1,3 +1,5 @@
+INSERT INTO role (nom) VALUES ('admin'), ('user');
+
 INSERT
 	INTO
 	artist (artist_id,artist_name,artist_location,artist_latitude,artist_longitude,artist_favorites,artist_comments,artist_listens,artist_active_year_begin,artist_active_year_end,artist_url,artist_website,artist_wikipedia_page,artist_handle,artist_bio,artist_members,artist_associated_labels,artist_related_projects,artist_contact,artist_donation_url,artist_paypal_name,artist_flattr_name,artist_date_created,artist_image_file)

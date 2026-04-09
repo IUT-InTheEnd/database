@@ -232,6 +232,7 @@ def build_user_rows(df: pd.DataFrame, timestamp: str) -> list[dict[str, Any]]:
                 "user_instruments": clean_text(row["instruments"]),
                 "user_music_contexts": clean_text(row["listening_contexts"]),
                 "profile_id": user_id,
+                "id_role": "1" if user_id == 10 else ""
             }
         )
     return rows
@@ -475,6 +476,7 @@ def main() -> None:
             "user_instruments",
             "user_music_contexts",
             "profile_id",
+            "id_role",
         ],
         build_user_rows(df, timestamp),
     )

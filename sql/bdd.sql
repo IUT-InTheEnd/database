@@ -21,6 +21,12 @@ CREATE TABLE user_profile (
     recommanded_artists TEXT    
 );
 
+-- ROLE
+CREATE TABLE "role" (
+  id_role SERIAL PRIMARY KEY,
+  nom VARCHAR(10) NOT NULL
+);
+
 CREATE TABLE "user" (
     -- Laravel colonnes obligatoires
     id SERIAL PRIMARY KEY,
@@ -43,8 +49,8 @@ CREATE TABLE "user" (
     user_gender VARCHAR(100),
     user_instruments TEXT,
     user_music_contexts TEXT,
-    profile_id INT,
-    FOREIGN KEY (profile_id) REFERENCES user_profile(user_profile_id)
+    profile_id INT REFERENCES user_profile(user_profile_id),
+    id_role INT DEFAULT 2 references "role"(id_role)
 );
 
 CREATE TABLE user_privacy (
@@ -337,20 +343,3 @@ ON personal_access_tokens (tokenable_type, tokenable_id);
 CREATE INDEX personal_access_tokens_expires_at_index
 ON personal_access_tokens (expires_at);
 
--- ROLE
-CREATE TABLE role (
-  id_role SERIAL PRIMARY KEY,
-  nom VARCHAR(10) NOT NULL
-);
-
-INSERT INTO role (nom) VALUES ('admin'), ('user');
-
-ALTER TABLE "user"
-ADD COLUMN id_role INT DEFAULT 2;
-
-ALTER TABLE "user"
-ADD CONSTRAINT fk_role
-FOREIGN KEY (id_role)
-REFERENCES role(id_role);
-
-UPDATE "user" SET id_role = 1 WHERE id = 106;

@@ -211,7 +211,8 @@ def import_users(cursor: psycopg2.extensions.cursor) -> None:
             user_gender,
             user_instruments,
             user_music_contexts,
-            profile_id
+            profile_id,
+            id_role
         ) VALUES %s
     """
     import_csv_values(
@@ -234,6 +235,7 @@ def import_users(cursor: psycopg2.extensions.cursor) -> None:
             clean_text(row["user_instruments"]),
             clean_text(row["user_music_contexts"]),
             required_int(row["profile_id"]),
+            optional_int(row["id_role"]),
         ),
     )
 
